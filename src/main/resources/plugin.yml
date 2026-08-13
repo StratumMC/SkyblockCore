@@ -1,0 +1,6 @@
+name: SkyblockCore
+version: '${version}'
+
+main: com.sallamadm.skyblockcore.SkyblockCore
+api-version: '1.20'
+load: POSTWORLD

@@ -1,0 +1,164 @@
+package com.sallamadm.skyblockcore.data;
+
+import com.sallamadm.skyblockcore.SkyblockCore;
+import com.sallamadm.skyblockcore.island.Island;
+import com.sallamadm.skyblockcore.island.Warp;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.block.Biome;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.UUID;
+
+public class DataManager {
+
+    private final SkyblockCore plugin;
+    private File file;
+    private FileConfiguration config;
+
+    public DataManager(SkyblockCore plugin) {
+        this.plugin = plugin;
+        createFile();
+    }
+
+    private void createFile() {
+        file = new File(plugin.getDataFolder(), "islandData.yml");
+
+        if (!file.exists()) {
+            file.getParentFile().mkdirs();
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        config = YamlConfiguration.loadConfiguration(file);
+    }
+
+    public void saveData() {
+        config.set("islands", null);
+        config.set("nextGridIndex", plugin.getIslandManager().getNextGridIndex());
+
+        for (Island island : plugin.getIslandManager().getAllIslands().values()) {
+            String path = "islands." + island.getOwnerUUID().toString();
+            config.set(path + ".size", island.getIslandSize());
+            config.set(path + ".level", island.getLevel());
+            config.set(path + ".name", island.getIslandName());
+            config.set(path + ".locked", island.isLocked());
+
+            if (island.getBiome() != null) {
+                config.set(path + ".biome", island.getBiome().name());
+            }
+
+            if (island.getCenterLocation() != null) {
+                config.set(path + ".world", island.getCenterLocation().getWorld().getName());
+                config.set(path + ".x", island.getCenterLocation().getX());
+                config.set(path + ".y", island.getCenterLocation().getY());
+                config.set(path + ".z", island.getCenterLocation().getZ());
+            }
+
+            if (island.getSpawnLocation() != null) {
+                config.set(path + ".spawn.x", island.getSpawnLocation().getX());
+                config.set(path + ".spawn.y", island.getSpawnLocation().getY());
+                config.set(path + ".spawn.z", island.getSpawnLocation().getZ());
+            }
+
+            if (!island.getWarps().isEmpty()) {
+                for (Warp warp : island.getWarps().values()) {
+                    String warpPath = path + ".warps." + warp.getName().toLowerCase();
+                    config.set(warpPath + ".name", warp.getName());
+                    config.set(warpPath + ".icon", warp.getIcon().name());
+                    config.set(warpPath + ".visible", warp.isVisible());
+                    if (warp.getLocation() != null) {
+                        config.set(warpPath + ".x", warp.getLocation().getX());
+                        config.set(warpPath + ".y", warp.getLocation().getY());
+                        config.set(warpPath + ".z", warp.getLocation().getZ());
+                        config.set(warpPath + ".yaw", warp.getLocation().getYaw());
+                        config.set(warpPath + ".pitch", warp.getLocation().getPitch());
+                    }
+                }
+            }
+        }
+
+        try {
+            config.save(file);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void loadData() {
+        if (!file.exists()) return;
+
+        if (config.contains("nextGridIndex")) {
+            plugin.getIslandManager().setNextGridIndex(config.getInt("nextGridIndex"));
+        }
+
+        if (!config.contains("islands")) return;
+
+        for (String uuidStr : config.getConfigurationSection("islands").getKeys(false)) {
+
+            String path = "islands." + uuidStr;
+            UUID uuid = UUID.fromString(uuidStr);
+            Island island = plugin.getIslandManager().createIsland(uuid);
+
+            String islandName = config.getString(path + ".name", "Island");
+            island.setIslandName(islandName);
+
+            int size = config.getInt(path + ".size", 50);
+            island.setIslandSize(size);
+            island.setLocked(config.getBoolean(path + ".locked", false));
+
+            if (config.contains(path + ".biome")) {
+                try {
+                    Biome biome = Biome.valueOf(config.getString(path + ".biome"));
+                    island.setBiome(biome);
+                } catch (IllegalArgumentException ignored) {}
+            }
+
+            if (config.contains(path + ".world")) {
+                World world = Bukkit.getWorld(config.getString(path + ".world"));
+                double x = config.getDouble(path + ".x");
+                double y = config.getDouble(path + ".y");
+                double z = config.getDouble(path + ".z");
+
+                if (world != null) {
+                    island.setCenterLocation(new Location(world, x, y, z));
+
+                    if (config.contains(path + ".spawn.x")) {
+                        double sx = config.getDouble(path + ".spawn.x");
+                        double sy = config.getDouble(path + ".spawn.y");
+                        double sz = config.getDouble(path + ".spawn.z");
+                        island.setSpawnLocation(new Location(world, sx, sy, sz));
+                    }
+
+                    if (config.contains(path + ".warps")) {
+                        for (String warpKey : config.getConfigurationSection(path + ".warps").getKeys(false)) {
+                            String warpPath = path + ".warps." + warpKey;
+                            String wName = config.getString(warpPath + ".name", warpKey);
+                            Material wIcon = Material.getMaterial(config.getString(warpPath + ".icon", "OAK_SIGN"));
+                            if (wIcon == null) wIcon = Material.OAK_SIGN;
+                            boolean wVis = config.getBoolean(warpPath + ".visible", false);
+
+                            double wx = config.getDouble(warpPath + ".x");
+                            double wy = config.getDouble(warpPath + ".y");
+                            double wz = config.getDouble(warpPath + ".z");
+                            float wyaw = (float) config.getDouble(warpPath + ".yaw");
+                            float wpitch = (float) config.getDouble(warpPath + ".pitch");
+
+                            Location wLoc = new Location(world, wx, wy, wz, wyaw, wpitch);
+                            Warp warp = new Warp(wName, wLoc, wIcon, wVis);
+                            island.addWarp(warp);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
