@@ -5,6 +5,7 @@ import com.sallamadm.skyblockcore.border.BorderManager;
 import com.sallamadm.skyblockcore.events.IslandEvents;
 import com.sallamadm.skyblockcore.island.Island;
 import com.sallamadm.skyblockcore.island.Warp;
+import com.sallamadm.skyblockcore.listeners.IslandSettingsMenuListener;
 import com.sallamadm.skyblockcore.listeners.WarpMenuListener;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.CommandPermission;
@@ -299,6 +300,18 @@ public class IsCommand {
                                 })
                 ))
 
+                // /is settings
+                .withSubcommand(createSubCommand("settings", "Opens your island settings GUI.",
+                        new CommandAPICommand("settings")
+                                .executesPlayer((player, args) -> {
+                                    Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
+                                    if (island == null) {
+                                        player.sendMessage(ChatColor.RED + "You don't have an island!");
+                                        return;
+                                    }
+                                    IslandSettingsMenuListener.openSettingsMenu(player);
+                                })
+                ))
 
 
                 // ADMIN COMMANDS
