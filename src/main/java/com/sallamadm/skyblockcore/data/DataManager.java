@@ -21,10 +21,15 @@ public class DataManager {
     private final SkyblockCore plugin;
     private File file;
     private FileConfiguration config;
+    private boolean loadingData = false;
 
     public DataManager(SkyblockCore plugin) {
         this.plugin = plugin;
         createFile();
+    }
+
+    public boolean isLoading() {
+        return loadingData;
     }
 
     private void createFile() {
@@ -43,6 +48,8 @@ public class DataManager {
     }
 
     public void saveData() {
+        if (loadingData) return;
+
         config.set("islands", null);
         config.set("nextGridIndex", plugin.getIslandManager().getNextGridIndex());
         config.set("availableGridIndices", plugin.getIslandManager().getAvailableGridIndices());
@@ -70,6 +77,8 @@ public class DataManager {
                 config.set(path + ".spawn.x", island.getSpawnLocation().getX());
                 config.set(path + ".spawn.y", island.getSpawnLocation().getY());
                 config.set(path + ".spawn.z", island.getSpawnLocation().getZ());
+                config.set(path + ".spawn.yaw", island.getSpawnLocation().getYaw());
+                config.set(path + ".spawn.pitch", island.getSpawnLocation().getPitch());
             }
 
             if (!island.getWarps().isEmpty()) {
@@ -99,76 +108,84 @@ public class DataManager {
     public void loadData() {
         if (!file.exists()) return;
 
-        if (config.contains("nextGridIndex")) {
-            plugin.getIslandManager().setNextGridIndex(config.getInt("nextGridIndex"));
-        }
+        loadingData = true;
 
-        if (config.contains("availableGridIndices")) {
-            List<Integer> savedIndices = config.getIntegerList("availableGridIndices");
-            plugin.getIslandManager().getAvailableGridIndices().clear();
-            plugin.getIslandManager().getAvailableGridIndices().addAll(savedIndices);
-        }
-
-        if (!config.contains("islands")) return;
-
-        for (String uuidStr : config.getConfigurationSection("islands").getKeys(false)) {
-
-            String path = "islands." + uuidStr;
-            UUID uuid = UUID.fromString(uuidStr);
-            Island island = plugin.getIslandManager().createIsland(uuid);
-
-            island.setGridIndex(config.getInt(path + ".gridIndex", 0));
-            String islandName = config.getString(path + ".name", "Island");
-            island.setIslandName(islandName);
-
-            int size = config.getInt(path + ".size", 50);
-            island.setIslandSize(size);
-            island.setLocked(config.getBoolean(path + ".locked", false));
-
-            if (config.contains(path + ".biome")) {
-                try {
-                    Biome biome = Biome.valueOf(config.getString(path + ".biome"));
-                    island.setBiome(biome);
-                } catch (IllegalArgumentException ignored) {}
+        try {
+            if (config.contains("nextGridIndex")) {
+                plugin.getIslandManager().setNextGridIndex(config.getInt("nextGridIndex"));
             }
 
-            if (config.contains(path + ".world")) {
-                World world = Bukkit.getWorld(config.getString(path + ".world"));
-                double x = config.getDouble(path + ".x");
-                double y = config.getDouble(path + ".y");
-                double z = config.getDouble(path + ".z");
+            if (config.contains("availableGridIndices")) {
+                List<Integer> savedIndices = config.getIntegerList("availableGridIndices");
+                plugin.getIslandManager().getAvailableGridIndices().clear();
+                plugin.getIslandManager().getAvailableGridIndices().addAll(savedIndices);
+            }
 
-                if (world != null) {
-                    island.setCenterLocation(new Location(world, x, y, z));
+            if (!config.contains("islands")) return;
 
-                    if (config.contains(path + ".spawn.x")) {
-                        double sx = config.getDouble(path + ".spawn.x");
-                        double sy = config.getDouble(path + ".spawn.y");
-                        double sz = config.getDouble(path + ".spawn.z");
-                        island.setSpawnLocation(new Location(world, sx, sy, sz));
-                    }
+            for (String uuidStr : config.getConfigurationSection("islands").getKeys(false)) {
 
-                    if (config.contains(path + ".warps")) {
-                        for (String warpKey : config.getConfigurationSection(path + ".warps").getKeys(false)) {
-                            String warpPath = path + ".warps." + warpKey;
-                            String wName = config.getString(warpPath + ".name", warpKey);
-                            Material wIcon = Material.getMaterial(config.getString(warpPath + ".icon", "OAK_SIGN"));
-                            if (wIcon == null) wIcon = Material.OAK_SIGN;
-                            boolean wVis = config.getBoolean(warpPath + ".visible", false);
+                String path = "islands." + uuidStr;
+                UUID uuid = UUID.fromString(uuidStr);
+                Island island = plugin.getIslandManager().createIsland(uuid);
 
-                            double wx = config.getDouble(warpPath + ".x");
-                            double wy = config.getDouble(warpPath + ".y");
-                            double wz = config.getDouble(warpPath + ".z");
-                            float wyaw = (float) config.getDouble(warpPath + ".yaw");
-                            float wpitch = (float) config.getDouble(warpPath + ".pitch");
+                island.setGridIndex(config.getInt(path + ".gridIndex", 0));
+                String islandName = config.getString(path + ".name", "Island");
+                island.setIslandName(islandName);
 
-                            Location wLoc = new Location(world, wx, wy, wz, wyaw, wpitch);
-                            Warp warp = new Warp(wName, wLoc, wIcon, wVis);
-                            island.addWarp(warp);
+                int size = config.getInt(path + ".size", 50);
+                island.setIslandSize(size);
+                island.setLocked(config.getBoolean(path + ".locked", false));
+
+                if (config.contains(path + ".biome")) {
+                    try {
+                        Biome biome = Biome.valueOf(config.getString(path + ".biome"));
+                        island.setBiome(biome);
+                    } catch (IllegalArgumentException ignored) {}
+                }
+
+                if (config.contains(path + ".world")) {
+                    World world = Bukkit.getWorld(config.getString(path + ".world"));
+                    double x = config.getDouble(path + ".x");
+                    double y = config.getDouble(path + ".y");
+                    double z = config.getDouble(path + ".z");
+
+                    if (world != null) {
+                        island.setCenterLocation(new Location(world, x, y, z));
+
+                        if (config.contains(path + ".spawn.x")) {
+                            double sx = config.getDouble(path + ".spawn.x");
+                            double sy = config.getDouble(path + ".spawn.y");
+                            double sz = config.getDouble(path + ".spawn.z");
+                            float syaw = (float) config.getDouble(path + ".spawn.yaw", -90.0f);
+                            float spitch = (float) config.getDouble(path + ".spawn.pitch", 15.0f);
+                            island.setSpawnLocation(new Location(world, sx, sy, sz, syaw, spitch));
+                        }
+
+                        if (config.contains(path + ".warps")) {
+                            for (String warpKey : config.getConfigurationSection(path + ".warps").getKeys(false)) {
+                                String warpPath = path + ".warps." + warpKey;
+                                String wName = config.getString(warpPath + ".name", warpKey);
+                                Material wIcon = Material.getMaterial(config.getString(warpPath + ".icon", "OAK_SIGN"));
+                                if (wIcon == null) wIcon = Material.OAK_SIGN;
+                                boolean wVis = config.getBoolean(warpPath + ".visible", false);
+
+                                double wx = config.getDouble(warpPath + ".x");
+                                double wy = config.getDouble(warpPath + ".y");
+                                double wz = config.getDouble(warpPath + ".z");
+                                float wyaw = (float) config.getDouble(warpPath + ".yaw");
+                                float wpitch = (float) config.getDouble(warpPath + ".pitch");
+
+                                Location wLoc = new Location(world, wx, wy, wz, wyaw, wpitch);
+                                Warp warp = new Warp(wName, wLoc, wIcon, wVis);
+                                island.addWarp(warp);
+                            }
                         }
                     }
                 }
             }
+        } finally {
+            loadingData = false;
         }
     }
 }

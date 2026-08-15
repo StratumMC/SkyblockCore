@@ -21,15 +21,11 @@ public class IslandDeleteMenu implements Listener {
     public static final String MENU_TITLE = ChatColor.WHITE + "\uF806\uE002";
 
     private static final Set<Integer> CONFIRM_SLOTS = Set.of(
-            1,2,3,
-            10,11,12,
-            19,20,21
+            10,11,12
     );
 
     private static final Set<Integer> CANCEL_SLOTS = Set.of(
-            5,6,7,
-            14,15,16,
-            23,24,25
+            14,15,16
     );
 
     public static void openConfirmMenu(Player player) {

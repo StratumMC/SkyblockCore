@@ -1,10 +1,14 @@
 package com.sallamadm.skyblockcore.island;
 
+import com.sallamadm.skyblockcore.gui.BiomeMenu;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Biome;
 
 import java.util.*;
+
+import static org.bukkit.block.Biome.PLAINS;
 
 public class IslandManager {
 
@@ -22,7 +26,7 @@ public class IslandManager {
 
     public Island createIsland(UUID ownerUUID) {
         Island island = new Island(ownerUUID);
-        islands.put(ownerUUID, island);
+        islands.put(ownerUUID, island);;
         return island;
     }
 
@@ -32,6 +36,7 @@ public class IslandManager {
             if (island.getCenterLocation() != null) {
                 clearIslandBlocks(island);
             }
+            BiomeMenu.changeIslandBiome(island, PLAINS);
             availableGridIndices.add(island.getGridIndex());
             islands.remove(ownerUUID);
         }

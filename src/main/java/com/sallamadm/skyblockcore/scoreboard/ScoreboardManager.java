@@ -26,8 +26,8 @@ public class ScoreboardManager {
 
 
         Score blank1 = obj.getScore(" ");
-        Score playerLine = obj.getScore(ChatColor.WHITE + "Player: " + ChatColor.YELLOW + player.getName());
-        Score levelLine = obj.getScore(ChatColor.WHITE + "Island Level: " + ChatColor.GREEN + level);
+        Score playerLine = obj.getScore(ChatColor.WHITE + "Oyuncu: " + ChatColor.YELLOW + player.getName());
+        Score levelLine = obj.getScore(ChatColor.WHITE + "Ada leveli: " + ChatColor.GREEN + level);
         Score blank2 = obj.getScore(" ");
         Score footer = obj.getScore(ChatColor.GRAY + "localhost");
 

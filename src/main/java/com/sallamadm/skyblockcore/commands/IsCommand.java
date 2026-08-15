@@ -31,6 +31,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.bukkit.block.Biome.PLAINS;
+
 public class IsCommand {
     private static MessageManager msg = SkyblockCore.getInstance().getMessageManager();
 
@@ -64,7 +66,7 @@ public class IsCommand {
                 .withAliases("island")
 
                 // /is level
-                .withSubcommand(createSubCommand("level", "Displays your island level.",
+                .withSubcommand(createSubCommand("level", "Ada levelinizi görün.",
                         new CommandAPICommand("level")
                                 .executesPlayer((player, args) -> {
                                     Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
@@ -77,7 +79,7 @@ public class IsCommand {
                 ))
 
                 // /is setname <name>
-                .withSubcommand(createSubCommand("setname <name>", "Change your islands name.",
+                .withSubcommand(createSubCommand("setname <name>", "Adanızın adını değiştirin.",
                         new CommandAPICommand("setname")
                                 .withArguments(new StringArgument("name"))
                                 .executesPlayer((player, args) -> {
@@ -94,7 +96,7 @@ public class IsCommand {
                 ))
 
                 // /is biome
-                .withSubcommand(createSubCommand("biome", "Change islands biome.",
+                .withSubcommand(createSubCommand("biome", "Adanızın biyomunu değiştirin.",
                         new CommandAPICommand("biome")
                                 .executesPlayer((player, args) -> {
                                     Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
@@ -107,7 +109,7 @@ public class IsCommand {
                 ))
 
                 // /is create
-                .withSubcommand(createSubCommand("create", "Creates a new island.",
+                .withSubcommand(createSubCommand("create", "Yeni bir ada oluşturun.",
                         new CommandAPICommand("create")
                                 .executesPlayer((player, args) -> {
                                     if (plugin.getIslandManager().hasIsland(player.getUniqueId())) {
@@ -139,11 +141,12 @@ public class IsCommand {
                                     plugin.getDataManager().saveData();
 
                                     player.sendMessage(msg.getMessage("island.created"));
+                                    BiomeMenu.changeIslandBiome(island, PLAINS);
                                 })
                 ))
 
                 // /is delete
-                .withSubcommand(createSubCommand("delete", "Deletes your island.",
+                .withSubcommand(createSubCommand("delete", "Adanızı silin.",
                         new CommandAPICommand("delete")
                                 .executesPlayer((player, args) -> {
                                     Island islandToDelete = plugin.getIslandManager().getIsland(player.getUniqueId());
@@ -156,7 +159,7 @@ public class IsCommand {
                 ))
 
                 // /is go
-                .withSubcommand(createSubCommand("go", "Teleports to your island.",
+                .withSubcommand(createSubCommand("go", "Adanıza ışınlanın.",
                         new CommandAPICommand("go")
                                 .executesPlayer((player, args) -> {
                                     if (plugin.getIslandManager().hasIsland(player.getUniqueId())) {
@@ -168,7 +171,7 @@ public class IsCommand {
                 ))
 
                 // /is help
-                .withSubcommand(createSubCommand("help", "Displays this help menu.",
+                .withSubcommand(createSubCommand("help", "Ada komutları listeler.",
                         new CommandAPICommand("help")
                                 .executesPlayer((player, args) -> {
                                     sendHelpMenu(player);
@@ -176,7 +179,7 @@ public class IsCommand {
                 ))
 
                 // /is lock
-                .withSubcommand(createSubCommand("lock", "Locks your island from visitors.",
+                .withSubcommand(createSubCommand("lock", "Ziyaretçilere adanızı kapatın.",
                         new CommandAPICommand("lock")
                                 .executesPlayer((player, args) -> {
                                     Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
@@ -196,7 +199,7 @@ public class IsCommand {
                 ))
 
                 // /is unlock
-                .withSubcommand(createSubCommand("unlock", "Unlocks your island for visitors.",
+                .withSubcommand(createSubCommand("unlock", "Adanızı ziyaretçilere açın.",
                         new CommandAPICommand("unlock")
                                 .executesPlayer((player, args) -> {
                                     Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
@@ -216,7 +219,7 @@ public class IsCommand {
                 ))
 
                 // /is setwarp
-                .withSubcommand(createSubCommand("setwarp <name>", "Creates a new warp on your island (Hidden by default).",
+                .withSubcommand(createSubCommand("setwarp <name>", "Adanıza yeni warp oluşturun.",
                         new CommandAPICommand("setwarp")
                                 .withArguments(new StringArgument("name"))
                                 .executesPlayer((player, args) -> {
@@ -247,7 +250,7 @@ public class IsCommand {
                 ))
 
                 // /is delwarp
-                .withSubcommand(createSubCommand("delwarp <name>", "Deletes a warp by name.",
+                .withSubcommand(createSubCommand("delwarp <name>", "Belirtilen isimdeki warpınızı silin.",
                         new CommandAPICommand("delwarp")
                                 .withArguments(new StringArgument("name"))
                                 .executesPlayer((player, args) -> {
@@ -269,7 +272,7 @@ public class IsCommand {
                 ))
 
                 // /is warps
-                .withSubcommand(createSubCommand("warps", "Opens your warp management GUI.",
+                .withSubcommand(createSubCommand("warps", "Ada warplarınızı düzenleyin.",
                         new CommandAPICommand("warps")
                                 .executesPlayer((player, args) -> {
                                     WarpMenu.openOwnerWarpMenu(player);
@@ -277,7 +280,7 @@ public class IsCommand {
                 ))
 
                 // /is visit
-                .withSubcommand(createSubCommand("visit [target] [warp]", "Visit someones island.",
+                .withSubcommand(createSubCommand("visit [target] [warp]", "Başka birinin adasını ziyaret edin.",
                         new CommandAPICommand("visit")
                                 .executesPlayer((player, args) -> {
                                     WarpMenu.openSelfTeleportWarpMenu(player);
@@ -290,7 +293,7 @@ public class IsCommand {
                 ))
 
                 // /is warp
-                .withSubcommand(createSubCommand("warp [target] [warp]", "Teleport to warps.",
+                .withSubcommand(createSubCommand("warp [target] [warp]", "Warp'a ışınlanın.",
                         new CommandAPICommand("warp")
                                 .executesPlayer((player, args) -> {
                                     WarpMenu.openSelfTeleportWarpMenu(player);
@@ -305,7 +308,7 @@ public class IsCommand {
                 // ADMIN COMMANDS
 
                 // /is set level <player> <amount>
-                .withSubcommand(createSubCommand("set level <player> <amount>", "[Admin] Sets player island level.",
+                .withSubcommand(createSubCommand("set level <player> <amount>", "[Admin] Oyuncu ada levelini ayarlayın.",
                         new CommandAPICommand("set")
                                 .withSubcommand(
                                         new CommandAPICommand("level")
@@ -336,7 +339,7 @@ public class IsCommand {
                 ))
 
                 // /is add level <player> <amount>
-                .withSubcommand(createSubCommand("add level <player> <amount>", "[Admin] Adds level to player island.",
+                .withSubcommand(createSubCommand("add level <player> <amount>", "[Admin] Oyuncuya ada leveli ekleyin.",
                         new CommandAPICommand("add")
                                 .withSubcommand(
                                         new CommandAPICommand("level")
@@ -394,7 +397,7 @@ public class IsCommand {
     }
 
     private static void sendHelpMenu(Player player) {
-        player.sendMessage(ChatColor.GOLD + "========== [ SKYBLOCK COMMANDS ] ==========");
+        player.sendMessage(ChatColor.GOLD + "========== [ SKYBLOCK KOMUTLARI ] ==========");
 
         for (Map.Entry<String, String> entry : HELP_MAP.entrySet()) {
             player.sendMessage(ChatColor.YELLOW + entry.getKey() + ChatColor.GRAY + " - " + entry.getValue());

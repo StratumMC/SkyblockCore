@@ -26,13 +26,13 @@ public class BiomeMenu implements Listener {
     private static MessageManager msg = SkyblockCore.getInstance().getMessageManager();
 
     public static void openBiomeMenu(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 27, ChatColor.DARK_BLUE + "Biome Selector");
+        Inventory inv = Bukkit.createInventory(null, 27, ChatColor.DARK_BLUE + "Biome Seçiniz");
 
-        inv.setItem(11, createBiomeItem(Material.GRASS_BLOCK, ChatColor.GREEN + "Plains Biome", "Click to set your island to Plains."));
+        inv.setItem(11, createBiomeItem(Material.GRASS_BLOCK, ChatColor.GREEN + "Plains Biome", "Ada biyomunuzu Plains yapın."));
 
-        inv.setItem(13, createBiomeItem(Material.SAND, ChatColor.YELLOW + "Desert Biome", "Click to set your island to Desert."));
+        inv.setItem(13, createBiomeItem(Material.SAND, ChatColor.YELLOW + "Desert Biome", "Ada biyomunuzu Desert yapın."));
 
-        inv.setItem(15, createBiomeItem(Material.WATER_BUCKET, ChatColor.AQUA + "Ocean Biome", "Click to set your island to Ocean."));
+        inv.setItem(15, createBiomeItem(Material.WATER_BUCKET, ChatColor.AQUA + "Ocean Biome", "Ada biyomunuzu Ocean yapın."));
 
         player.openInventory(inv);
     }
@@ -50,7 +50,7 @@ public class BiomeMenu implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!event.getView().getTitle().equals(ChatColor.DARK_BLUE + "Biome Selector")) return;
+        if (!event.getView().getTitle().equals(ChatColor.DARK_BLUE + "Biome Seçiniz")) return;
 
         event.setCancelled(true);
 

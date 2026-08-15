@@ -28,9 +28,9 @@ import java.util.*;
 public class WarpMenu implements Listener {
     private static MessageManager msg = SkyblockCore.getInstance().getMessageManager();
 
-    private static final String VISITOR_MENU_PREFIX = ChatColor.DARK_GREEN + "Island Warps: ";
-    private static final String OWNER_MENU_TITLE = ChatColor.DARK_PURPLE + "Your Island Warps";
-    private static final String MANAGE_MENU_PREFIX = ChatColor.DARK_BLUE + "Manage Warp: ";
+    private static final String VISITOR_MENU_PREFIX = ChatColor.DARK_GREEN + "Ada warpları: ";
+    private static final String OWNER_MENU_TITLE = ChatColor.DARK_PURPLE + "Adanızdaki warplar: ";
+    private static final String MANAGE_MENU_PREFIX = ChatColor.DARK_BLUE + "Warp düzenle: ";
 
     private static final Map<UUID, String> PENDING_RENAME_WARPS = new HashMap<>();
     private static final Map<UUID, BlockData> ORIGINAL_BLOCK_DATA = new HashMap<>();
@@ -52,7 +52,7 @@ public class WarpMenu implements Listener {
             ItemMeta meta = item.getItemMeta();
             if (meta != null) {
                 meta.setDisplayName(ChatColor.GREEN + warp.getName());
-                meta.setLore(Collections.singletonList(ChatColor.GRAY + "Click to teleport to this warp."));
+                meta.setLore(Collections.singletonList(ChatColor.GRAY + "Warpa ışınlanmak için tıklayın."));
                 item.setItemMeta(meta);
             }
             inv.setItem(slot++, item);
@@ -92,7 +92,7 @@ public class WarpMenu implements Listener {
             ItemMeta meta = item.getItemMeta();
             if (meta != null) {
                 meta.setDisplayName(ChatColor.GREEN + warp.getName());
-                meta.setLore(Collections.singletonList(ChatColor.GRAY + "Click to teleport to this warp."));
+                meta.setLore(Collections.singletonList(ChatColor.GRAY + "Warpa ışınlanmak için tıklayın."));
                 item.setItemMeta(meta);
             }
             inv.setItem(slot++, item);
@@ -118,8 +118,8 @@ public class WarpMenu implements Listener {
             if (meta != null) {
                 meta.setDisplayName(ChatColor.YELLOW + warp.getName());
                 List<String> lore = new ArrayList<>();
-                lore.add(ChatColor.GRAY + "Status: " + (warp.isVisible() ? ChatColor.GREEN + "Visible" : ChatColor.RED + "Hidden"));
-                lore.add(ChatColor.GOLD + "Click to manage this warp.");
+                lore.add(ChatColor.GRAY + "Durum: " + (warp.isVisible() ? ChatColor.GREEN + "Açık" : ChatColor.RED + "Kapalı"));
+                lore.add(ChatColor.GOLD + "Warpı düzenlemek için tıklayın.");
                 meta.setLore(lore);
                 item.setItemMeta(meta);
             }
@@ -137,10 +137,10 @@ public class WarpMenu implements Listener {
         ItemStack nameItem = new ItemStack(Material.NAME_TAG);
         ItemMeta nameMeta = nameItem.getItemMeta();
         if (nameMeta != null) {
-            nameMeta.setDisplayName(ChatColor.GOLD + "Change Name");
+            nameMeta.setDisplayName(ChatColor.GOLD + "Warp ismi değiştirin");
             nameMeta.setLore(Arrays.asList(
-                    ChatColor.GRAY + "Current Name: " + ChatColor.YELLOW + warp.getName(),
-                    ChatColor.YELLOW + "Click to write a name on sign."
+                    ChatColor.GRAY + "Şuanki isim: " + ChatColor.YELLOW + warp.getName(),
+                    ChatColor.YELLOW + "Yeni isim koymak için tıklayın."
             ));
             nameItem.setItemMeta(nameMeta);
         }
@@ -150,10 +150,10 @@ public class WarpMenu implements Listener {
         ItemStack locItem = new ItemStack(Material.COMPASS);
         ItemMeta locMeta = locItem.getItemMeta();
         if (locMeta != null) {
-            locMeta.setDisplayName(ChatColor.AQUA + "Change Location");
+            locMeta.setDisplayName(ChatColor.AQUA + "Warp lokasyonu");
             locMeta.setLore(Arrays.asList(
-                    ChatColor.GRAY + "Click to update warp location",
-                    ChatColor.GRAY + "to your current standing position."
+                    ChatColor.GRAY + "Warp lokasyonunu şuanki",
+                    ChatColor.GRAY + "konumuz ile değiştirmek için tıklayın."
             ));
             locItem.setItemMeta(locMeta);
         }
@@ -163,10 +163,10 @@ public class WarpMenu implements Listener {
         ItemStack iconItem = new ItemStack(warp.getIcon());
         ItemMeta iconMeta = iconItem.getItemMeta();
         if (iconMeta != null) {
-            iconMeta.setDisplayName(ChatColor.GREEN + "Change Icon");
+            iconMeta.setDisplayName(ChatColor.GREEN + "İkon değiştirme");
             iconMeta.setLore(Arrays.asList(
-                    ChatColor.GRAY + "Hold an item in your main hand",
-                    ChatColor.GRAY + "and click to set it as warp icon."
+                    ChatColor.GRAY + "Warp ikonunu ayarlamak için",
+                    ChatColor.GRAY + "ana elinizde bir eşya tutunuz."
             ));
             iconItem.setItemMeta(iconMeta);
         }
@@ -177,11 +177,11 @@ public class WarpMenu implements Listener {
         ItemMeta visMeta = visItem.getItemMeta();
         if (visMeta != null) {
             if (warp.isVisible()) {
-                visMeta.setDisplayName(ChatColor.RED + "Disable Warp");
-                visMeta.setLore(Collections.singletonList(ChatColor.GRAY + "Click to hide this warp from visitors."));
+                visMeta.setDisplayName(ChatColor.RED + "Warpı kapat");
+                visMeta.setLore(Collections.singletonList(ChatColor.GRAY + "Ziyaretçilere kapatmak için tıklayın."));
             } else {
-                visMeta.setDisplayName(ChatColor.GREEN + "Enable Warp");
-                visMeta.setLore(Collections.singletonList(ChatColor.GRAY + "Click to show this warp to visitors."));
+                visMeta.setDisplayName(ChatColor.GREEN + "Warpı aç");
+                visMeta.setLore(Collections.singletonList(ChatColor.GRAY + "Ziyaretçilere açmak için tıklayın."));
             }
             visItem.setItemMeta(visMeta);
         }
@@ -191,8 +191,8 @@ public class WarpMenu implements Listener {
         ItemStack delItem = new ItemStack(Material.REDSTONE_BLOCK);
         ItemMeta delMeta = delItem.getItemMeta();
         if (delMeta != null) {
-            delMeta.setDisplayName(ChatColor.RED + "Delete Warp");
-            delMeta.setLore(Collections.singletonList(ChatColor.GRAY + "Click to permanently delete this warp."));
+            delMeta.setDisplayName(ChatColor.RED + "Warp sil");
+            delMeta.setLore(Collections.singletonList(ChatColor.GRAY + "Warpı silmek için tıklayın."));
             delItem.setItemMeta(delMeta);
         }
         inv.setItem(8, delItem);
@@ -214,8 +214,8 @@ public class WarpMenu implements Listener {
         if (block.getState() instanceof Sign sign) {
             sign.setLine(0, "");
             sign.setLine(1, "^^^^^^^^^^^^^^^");
-            sign.setLine(2, "Enter New Name");
-            sign.setLine(3, "for: " + warp.getName());
+            sign.setLine(2, "Yeni isim giriniz");
+            sign.setLine(3, "Eski isim: " + warp.getName());
             sign.update(true);
 
             player.openSign(sign, Side.FRONT);
@@ -371,7 +371,7 @@ public class WarpMenu implements Listener {
             else if (slot == 6) {
                 warp.setVisible(!warp.isVisible());
                 player.sendMessage(msg.getMessage("warp.visibility-toggle")
-                        .replace("{status}", warp.isVisible() ? "ENABLED" : "DISABLED"));
+                        .replace("{status}", warp.isVisible() ? "AÇIK" : "KAPALI"));
                 openManageWarpMenu(player, warp);
             }
 
