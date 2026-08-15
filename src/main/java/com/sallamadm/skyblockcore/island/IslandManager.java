@@ -26,7 +26,7 @@ public class IslandManager {
 
     public Island createIsland(UUID ownerUUID) {
         Island island = new Island(ownerUUID);
-        islands.put(ownerUUID, island);;
+        islands.put(ownerUUID, island);
         return island;
     }
 
