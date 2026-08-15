@@ -2,11 +2,14 @@ package com.sallamadm.skyblockcore.commands;
 
 import com.sallamadm.skyblockcore.SkyblockCore;
 import com.sallamadm.skyblockcore.border.BorderManager;
+import com.sallamadm.skyblockcore.config.MessageManager;
 import com.sallamadm.skyblockcore.events.IslandEvents;
+import com.sallamadm.skyblockcore.gui.IslandDeleteMenu;
 import com.sallamadm.skyblockcore.island.Island;
 import com.sallamadm.skyblockcore.island.Warp;
-import com.sallamadm.skyblockcore.listeners.IsMenu;
-import com.sallamadm.skyblockcore.listeners.WarpMenuListener;
+import com.sallamadm.skyblockcore.gui.IsMenu;
+import com.sallamadm.skyblockcore.gui.BiomeMenu;
+import com.sallamadm.skyblockcore.gui.WarpMenu;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.CommandPermission;
 import dev.jorel.commandapi.arguments.ArgumentSuggestions;
@@ -29,11 +32,14 @@ import java.util.List;
 import java.util.Map;
 
 public class IsCommand {
+    private static MessageManager msg = SkyblockCore.getInstance().getMessageManager();
 
     private static final Map<String, String> HELP_MAP = new LinkedHashMap<>();
 
     public static void registerCommand(SkyblockCore plugin) {
         HELP_MAP.clear();
+
+
 
         ArgumentSuggestions<CommandSender> warpSuggestions = ArgumentSuggestions.strings(info -> {
             String targetName = info.previousArgs().get("target") != null ? (String) info.previousArgs().get("target") : "";
@@ -63,10 +69,10 @@ public class IsCommand {
                                 .executesPlayer((player, args) -> {
                                     Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
                                     if (island == null) {
-                                        player.sendMessage(ChatColor.RED + "You don't have an island! Create one first with /is create.");
+                                        player.sendMessage(msg.getMessage("island.no-island"));
                                         return;
                                     }
-                                    player.sendMessage(ChatColor.GREEN + "Your Island Level: " + ChatColor.YELLOW + island.getLevel());
+                                    player.sendMessage(msg.getMessage("island.level-info").replace("{level}", String.valueOf(island.getLevel())));
                                 })
                 ))
 
@@ -77,13 +83,13 @@ public class IsCommand {
                                 .executesPlayer((player, args) -> {
                                     Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
                                     if (island == null) {
-                                        player.sendMessage(ChatColor.RED + "You don't have an island!");
+                                        player.sendMessage(msg.getMessage("island.no-island"));
                                         return;
                                     }
                                     String newName = (String) args.get("name");
                                     island.setIslandName(newName);
                                     plugin.getDataManager().saveData();
-                                    player.sendMessage(ChatColor.GREEN + "Your island name has been changed to: " + ChatColor.YELLOW + newName);
+                                    player.sendMessage(msg.getMessage("island.name-changed").replace("{name}", newName));
                                 })
                 ))
 
@@ -93,10 +99,10 @@ public class IsCommand {
                                 .executesPlayer((player, args) -> {
                                     Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
                                     if (island == null) {
-                                        player.sendMessage(ChatColor.RED + "You don't have an island!");
+                                        player.sendMessage(msg.getMessage("island.no-island"));
                                         return;
                                     }
-                                    com.sallamadm.skyblockcore.listeners.BiomeMenuListener.openBiomeMenu(player);
+                                    BiomeMenu.openBiomeMenu(player);
                                 })
                 ))
 
@@ -105,13 +111,13 @@ public class IsCommand {
                         new CommandAPICommand("create")
                                 .executesPlayer((player, args) -> {
                                     if (plugin.getIslandManager().hasIsland(player.getUniqueId())) {
-                                        player.sendMessage(ChatColor.RED + "You already have an island.");
+                                        player.sendMessage(msg.getMessage("island.already-has-island"));
                                         return;
                                     }
 
                                     World skyblockWorld = plugin.getWorldManager().getSkyblockWorld();
                                     if (skyblockWorld == null) {
-                                        player.sendMessage(ChatColor.RED + "Cannot load skyblock world!");
+                                        player.sendMessage(msg.getMessage("island.cannot-load-world"));
                                         return;
                                     }
 
@@ -132,7 +138,7 @@ public class IsCommand {
 
                                     plugin.getDataManager().saveData();
 
-                                    player.sendMessage(ChatColor.GREEN + "Created your island.");
+                                    player.sendMessage(msg.getMessage("island.created"));
                                 })
                 ))
 
@@ -142,22 +148,10 @@ public class IsCommand {
                                 .executesPlayer((player, args) -> {
                                     Island islandToDelete = plugin.getIslandManager().getIsland(player.getUniqueId());
                                     if (islandToDelete == null) {
-                                        player.sendMessage(ChatColor.RED + "You don't have an island.");
+                                        player.sendMessage(msg.getMessage("island.no-island"));
                                         return;
                                     }
-
-                                    Bukkit.getPluginManager().callEvent(new IslandEvents.Delete(player, islandToDelete));
-                                    BorderManager.removeBorder(player);
-                                    plugin.getIslandManager().removeIsland(player.getUniqueId());
-
-                                    plugin.getDataManager().saveData();
-
-                                    plugin.getScoreboardManager().updateScoreboard(player);
-
-                                    World mainWorld = Bukkit.getWorlds().get(0);
-                                    player.teleport(mainWorld.getSpawnLocation());
-
-                                    player.sendMessage(ChatColor.YELLOW + "Island deleted.");
+                                    IslandDeleteMenu.openConfirmMenu(player);
                                 })
                 ))
 
@@ -168,7 +162,7 @@ public class IsCommand {
                                     if (plugin.getIslandManager().hasIsland(player.getUniqueId())) {
                                         teleportToIsland(plugin, player);
                                     } else {
-                                        player.sendMessage(ChatColor.RED + "You don't have an island. Create one first! /is create");
+                                        player.sendMessage(msg.getMessage("island.no-island"));
                                     }
                                 })
                 ))
@@ -187,17 +181,17 @@ public class IsCommand {
                                 .executesPlayer((player, args) -> {
                                     Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
                                     if (island == null) {
-                                        player.sendMessage(ChatColor.RED + "You don't have an island!");
+                                        player.sendMessage(msg.getMessage("island.no-island"));
                                         return;
                                     }
 
                                     if (island.isLocked()) {
-                                        player.sendMessage(ChatColor.RED + "Your island is already locked!");
+                                        player.sendMessage(msg.getMessage("island.already-locked"));
                                         return;
                                     }
 
                                     island.setLocked(true);
-                                    player.sendMessage(ChatColor.GREEN + "Your island is now " + ChatColor.RED + "LOCKED" + ChatColor.GREEN + " to visitors.");
+                                    player.sendMessage(msg.getMessage("island.locked"));
                                 })
                 ))
 
@@ -207,17 +201,17 @@ public class IsCommand {
                                 .executesPlayer((player, args) -> {
                                     Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
                                     if (island == null) {
-                                        player.sendMessage(ChatColor.RED + "You don't have an island!");
+                                        player.sendMessage(msg.getMessage("island.no-island"));
                                         return;
                                     }
 
                                     if (!island.isLocked()) {
-                                        player.sendMessage(ChatColor.RED + "Your island is already unlocked!");
+                                        player.sendMessage(msg.getMessage("island.already-unlocked"));
                                         return;
                                     }
 
                                     island.setLocked(false);
-                                    player.sendMessage(ChatColor.GREEN + "Your island is now " + ChatColor.AQUA + "UNLOCKED" + ChatColor.GREEN + " to visitors.");
+                                    player.sendMessage(msg.getMessage("island.unlocked"));
                                 })
                 ))
 
@@ -228,27 +222,27 @@ public class IsCommand {
                                 .executesPlayer((player, args) -> {
                                     Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
                                     if (island == null) {
-                                        player.sendMessage(ChatColor.RED + "You don't have an island!");
+                                        player.sendMessage(msg.getMessage("island.no-island"));
                                         return;
                                     }
 
                                     Location loc = player.getLocation();
                                     Location center = island.getCenterLocation();
                                     if (center == null || !loc.getWorld().equals(center.getWorld())) {
-                                        player.sendMessage(ChatColor.RED + "You must be on your island to set a warp!");
+                                        player.sendMessage(msg.getMessage("warp.must-be-on-island"));
                                         return;
                                     }
 
                                     int radius = island.getIslandSize() / 2;
                                     if (Math.abs(loc.getBlockX() - center.getBlockX()) > radius || Math.abs(loc.getBlockZ() - center.getBlockZ()) > radius) {
-                                        player.sendMessage(ChatColor.RED + "You can only set warps within your island boundary!");
+                                        player.sendMessage(msg.getMessage("warp.outside-boundary"));
                                         return;
                                     }
 
                                     String warpName = (String) args.get("name");
                                     Warp warp = new Warp(warpName, loc);
                                     island.addWarp(warp);
-                                    player.sendMessage(ChatColor.GREEN + "Warp " + ChatColor.YELLOW + warpName + ChatColor.GREEN + " created! It is currently " + ChatColor.RED + "HIDDEN" + ChatColor.GREEN + " from visitors.");
+                                    player.sendMessage(msg.getMessage("warp.created").replace("{warp}", warpName));
                                 })
                 ))
 
@@ -259,18 +253,18 @@ public class IsCommand {
                                 .executesPlayer((player, args) -> {
                                     Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
                                     if (island == null) {
-                                        player.sendMessage(ChatColor.RED + "You don't have an island!");
+                                        player.sendMessage(msg.getMessage("island.no-island"));
                                         return;
                                     }
 
                                     String warpName = (String) args.get("name");
                                     if (island.getWarp(warpName) == null) {
-                                        player.sendMessage(ChatColor.RED + "Warp not found: " + warpName);
+                                        player.sendMessage(msg.getMessage("warp.not-found").replace("{warp}", warpName));
                                         return;
                                     }
 
                                     island.removeWarp(warpName);
-                                    player.sendMessage(ChatColor.GREEN + "Warp " + ChatColor.YELLOW + warpName + ChatColor.GREEN + " has been deleted!");
+                                    player.sendMessage(msg.getMessage("warp.deleted").replace("{warp}", warpName));
                                 })
                 ))
 
@@ -278,7 +272,7 @@ public class IsCommand {
                 .withSubcommand(createSubCommand("warps", "Opens your warp management GUI.",
                         new CommandAPICommand("warps")
                                 .executesPlayer((player, args) -> {
-                                    WarpMenuListener.openOwnerWarpMenu(player);
+                                    WarpMenu.openOwnerWarpMenu(player);
                                 })
                 ))
 
@@ -286,7 +280,7 @@ public class IsCommand {
                 .withSubcommand(createSubCommand("visit [target] [warp]", "Visit someones island.",
                         new CommandAPICommand("visit")
                                 .executesPlayer((player, args) -> {
-                                    WarpMenuListener.openSelfTeleportWarpMenu(player);
+                                    WarpMenu.openSelfTeleportWarpMenu(player);
                                 })
                                 .withOptionalArguments(new StringArgument("target"))
                                 .withOptionalArguments(new StringArgument("warp").replaceSuggestions(warpSuggestions))
@@ -299,7 +293,7 @@ public class IsCommand {
                 .withSubcommand(createSubCommand("warp [target] [warp]", "Teleport to warps.",
                         new CommandAPICommand("warp")
                                 .executesPlayer((player, args) -> {
-                                    WarpMenuListener.openSelfTeleportWarpMenu(player);
+                                    WarpMenu.openSelfTeleportWarpMenu(player);
                                 })
                                 .withOptionalArguments(new StringArgument("target"))
                                 .withOptionalArguments(new StringArgument("warp").replaceSuggestions(warpSuggestions))
@@ -324,15 +318,19 @@ public class IsCommand {
 
                                                     Island targetIsland = plugin.getIslandManager().getIsland(target.getUniqueId());
                                                     if (targetIsland == null) {
-                                                        player.sendMessage(ChatColor.RED + target.getName() + " does not have an island!");
+                                                        player.sendMessage(msg.getMessage("admin.target-no-island").replace("{target}", target.getName()));
                                                         return;
                                                     }
 
                                                     targetIsland.setLevel(amount);
                                                     plugin.getScoreboardManager().updateScoreboard(target);
 
-                                                    player.sendMessage(ChatColor.GREEN + "Set " + target.getName() + "'s island level to " + amount + ".");
-                                                    target.sendMessage(ChatColor.GREEN + "Your island level has been set to " + amount + ".");
+                                                    player.sendMessage(msg.getMessage("admin.level-set-sender")
+                                                            .replace("{target}", target.getName())
+                                                            .replace("{level}", String.valueOf(amount)));
+
+                                                    target.sendMessage(msg.getMessage("admin.level-set-target")
+                                                            .replace("{level}", String.valueOf(amount)));
                                                 })
                                 )
                 ))
@@ -351,7 +349,7 @@ public class IsCommand {
 
                                                     Island targetIsland = plugin.getIslandManager().getIsland(target.getUniqueId());
                                                     if (targetIsland == null) {
-                                                        player.sendMessage(ChatColor.RED + target.getName() + " does not have an island!");
+                                                        player.sendMessage(msg.getMessage("admin.target-no-island").replace("{target}", target.getName()));
                                                         return;
                                                     }
 
@@ -359,8 +357,14 @@ public class IsCommand {
                                                     plugin.getScoreboardManager().updateScoreboard(target);
 
                                                     int newLevel = targetIsland.getLevel();
-                                                    player.sendMessage(ChatColor.GREEN + "Added " + amount + " levels to " + target.getName() + ". New level: " + newLevel);
-                                                    target.sendMessage(ChatColor.GREEN + "Added " + amount + " levels to your island! New level: " + newLevel);
+                                                    player.sendMessage(msg.getMessage("admin.level-add-sender")
+                                                            .replace("{target}", target.getName())
+                                                            .replace("{amount}", String.valueOf(amount))
+                                                            .replace("{level}", String.valueOf(newLevel)));
+
+                                                    target.sendMessage(msg.getMessage("admin.level-add-target")
+                                                            .replace("{amount}", String.valueOf(amount))
+                                                            .replace("{level}", String.valueOf(newLevel)));
                                                 })
                                 )
                 ))
@@ -383,9 +387,9 @@ public class IsCommand {
             player.setFallDistance(0);
             player.teleport(island.getSpawnLocation());
             BorderManager.applyIslandBorder(player, island);
-            player.sendMessage(ChatColor.GREEN + "Teleported to your island.");
+            player.sendMessage(msg.getMessage("island.teleported"));
         } else {
-            player.sendMessage(ChatColor.RED + "Cannot find your island!");
+            player.sendMessage(msg.getMessage("island.no-island"));
         }
     }
 
@@ -445,6 +449,7 @@ public class IsCommand {
         island.setSpawnLocation(spawnLocation);
         player.setBedSpawnLocation(spawnLocation, true);
         player.teleport(spawnLocation);
+        SkyblockCore.getInstance().getDataManager().saveData();
     }
 
     private static void handleWarpTeleportCommand(Player player, dev.jorel.commandapi.executors.CommandArguments args, SkyblockCore plugin) {
@@ -452,12 +457,12 @@ public class IsCommand {
         String warpName = (String) args.get("warp");
 
         if (targetName == null || targetName.isEmpty()) {
-            WarpMenuListener.openSelfTeleportWarpMenu(player);
+            WarpMenu.openSelfTeleportWarpMenu(player);
             return;
         }
 
         if (warpName == null || warpName.isEmpty()) {
-            WarpMenuListener.openVisitorWarpMenu(player, targetName);
+            WarpMenu.openVisitorWarpMenu(player, targetName);
             return;
         }
 
@@ -466,24 +471,26 @@ public class IsCommand {
         Island island = plugin.getIslandManager().getIsland(targetOwner.getUniqueId());
 
         if (island == null) {
-            player.sendMessage(ChatColor.RED + "Player or island not found!");
+            player.sendMessage(msg.getMessage("general.player-not-found"));
             return;
         }
 
         if (island.isLocked() && !player.isOp()) {
-            player.sendMessage(ChatColor.RED + "This island is locked by its owner!");
+            player.sendMessage(msg.getMessage("island.locked-by-owner"));
             return;
         }
 
         Warp warp = island.getWarp(warpName);
         if (warp == null || (!warp.isVisible() && !player.isOp())) {
-            player.sendMessage(ChatColor.RED + "Warp not found or disabled!");
+            player.sendMessage(msg.getMessage("warp.not-found").replace("{warp}", warpName));
             return;
         }
 
         player.setFallDistance(0);
         player.teleport(warp.getLocation());
         BorderManager.applyIslandBorder(player, island);
-        player.sendMessage(ChatColor.GREEN + "Teleported to " + targetName + "'s warp: " + ChatColor.YELLOW + warp.getName());
+        player.sendMessage(msg.getMessage("warp.teleported")
+                .replace("{target}", targetName)
+                .replace("{warp}", warp.getName()));
     }
 }

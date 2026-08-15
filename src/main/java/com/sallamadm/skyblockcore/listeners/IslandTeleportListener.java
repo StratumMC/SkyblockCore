@@ -39,7 +39,7 @@ public class IslandTeleportListener implements Listener {
 
             if (!isOwner && targetIsland.isLocked() && !player.isOp()) {
                 event.setCancelled(true);
-                player.sendMessage(ChatColor.RED + "This island is locked by its owner!");
+                player.sendMessage(SkyblockCore.getInstance().getMessageManager().getMessage("island.locked-by-owner"));
                 return;
             }
             BorderManager.applyIslandBorder(player, targetIsland);

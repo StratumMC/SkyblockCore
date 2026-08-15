@@ -1,6 +1,7 @@
-package com.sallamadm.skyblockcore.listeners;
+package com.sallamadm.skyblockcore.gui;
 
 import com.sallamadm.skyblockcore.SkyblockCore;
+import com.sallamadm.skyblockcore.config.MessageManager;
 import com.sallamadm.skyblockcore.island.Island;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -21,7 +22,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class BiomeMenuListener implements Listener {
+public class BiomeMenu implements Listener {
+    private static MessageManager msg = SkyblockCore.getInstance().getMessageManager();
 
     public static void openBiomeMenu(Player player) {
         Inventory inv = Bukkit.createInventory(null, 27, ChatColor.DARK_BLUE + "Biome Selector");
@@ -75,7 +77,7 @@ public class BiomeMenuListener implements Listener {
             Island island = SkyblockCore.getInstance().getIslandManager().getIsland(player.getUniqueId());
 
             if (island == null) {
-                player.sendMessage(ChatColor.RED + "You don't have an island!");
+                player.sendMessage(msg.getMessage("island.no-island"));
                 player.closeInventory();
                 return;
             }
@@ -86,7 +88,7 @@ public class BiomeMenuListener implements Listener {
 
             changeIslandBiome(island, selectedBiome);
 
-            player.sendMessage(ChatColor.GREEN + "Island biome set to " + ChatColor.YELLOW + biomeName + ChatColor.GREEN + "!");
+            player.sendMessage(msg.getMessage("biome.updated").replace("{biome}", selectedBiome.name()));
             player.closeInventory();
         }
     }

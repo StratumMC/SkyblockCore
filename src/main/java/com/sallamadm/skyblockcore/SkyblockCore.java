@@ -1,7 +1,12 @@
 package com.sallamadm.skyblockcore;
 
 import com.sallamadm.skyblockcore.commands.IsCommand;
+import com.sallamadm.skyblockcore.config.MessageManager;
 import com.sallamadm.skyblockcore.data.DataManager;
+import com.sallamadm.skyblockcore.gui.BiomeMenu;
+import com.sallamadm.skyblockcore.gui.IsMenu;
+import com.sallamadm.skyblockcore.gui.IslandDeleteMenu;
+import com.sallamadm.skyblockcore.gui.WarpMenu;
 import com.sallamadm.skyblockcore.island.IslandManager;
 import com.sallamadm.skyblockcore.listeners.*;
 import com.sallamadm.skyblockcore.scoreboard.ScoreboardManager;
@@ -17,6 +22,7 @@ public final class SkyblockCore extends JavaPlugin {
     private ScoreboardManager scoreboardManager;
     private DataManager dataManager;
     private WorldManager worldManager;
+    private MessageManager messageManager;
 
 
     @Override
@@ -27,6 +33,7 @@ public final class SkyblockCore extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
+        this.messageManager = new MessageManager(this);
         this.islandManager = new IslandManager();
         this.scoreboardManager = new ScoreboardManager(this);
         this.worldManager = new WorldManager(this);
@@ -38,13 +45,16 @@ public final class SkyblockCore extends JavaPlugin {
         IsCommand.registerCommand(this);
 
 
-        getServer().getPluginManager().registerEvents(new BiomeMenuListener(), this);
+        getServer().getPluginManager().registerEvents(new BiomeMenu(), this);
         getServer().getPluginManager().registerEvents(new JoinListener(this), this);
         getServer().getPluginManager().registerEvents(new VoidFallListener(this), this);
         getServer().getPluginManager().registerEvents(new IslandTeleportListener(this), this);
         getServer().getPluginManager().registerEvents(new IslandProtectionListener(this), this);
-        getServer().getPluginManager().registerEvents(new WarpMenuListener(), this);
+
+        //guis
+        getServer().getPluginManager().registerEvents(new WarpMenu(), this);
         getServer().getPluginManager().registerEvents(new IsMenu(), this);
+        getServer().getPluginManager().registerEvents(new IslandDeleteMenu(), this);
 
         getLogger().info("Skyblock Core is now activated.");
     }
@@ -78,5 +88,9 @@ public final class SkyblockCore extends JavaPlugin {
 
     public DataManager getDataManager() {
         return dataManager;
+    }
+
+    public MessageManager getMessageManager() {
+        return messageManager;
     }
 }

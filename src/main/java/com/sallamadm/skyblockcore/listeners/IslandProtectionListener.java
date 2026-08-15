@@ -1,6 +1,7 @@
 package com.sallamadm.skyblockcore.listeners;
 
 import com.sallamadm.skyblockcore.SkyblockCore;
+import com.sallamadm.skyblockcore.config.MessageManager;
 import com.sallamadm.skyblockcore.island.Island;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -16,6 +17,7 @@ import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 
 public class IslandProtectionListener implements Listener {
+    private static MessageManager msg = SkyblockCore.getInstance().getMessageManager();
 
     private final SkyblockCore plugin;
 
@@ -67,7 +69,7 @@ public class IslandProtectionListener implements Listener {
     public void onBlockBreak(BlockBreakEvent event) {
         if (!canInteract(event.getPlayer(), event.getBlock().getLocation())) {
             event.setCancelled(true);
-            event.getPlayer().sendMessage(ChatColor.RED + "You cannot break blocks on this island!");
+            event.getPlayer().sendMessage(msg.getMessage("protection.cannot-build"));
         }
     }
 
@@ -75,7 +77,7 @@ public class IslandProtectionListener implements Listener {
     public void onBlockPlace(BlockPlaceEvent event) {
         if (!canInteract(event.getPlayer(), event.getBlock().getLocation())) {
             event.setCancelled(true);
-            event.getPlayer().sendMessage(ChatColor.RED + "You cannot place blocks on this island!");
+            event.getPlayer().sendMessage(msg.getMessage("protection.cannot-build"));
         }
     }
 
@@ -84,7 +86,7 @@ public class IslandProtectionListener implements Listener {
         if (event.getClickedBlock() == null) return;
         if (!canInteract(event.getPlayer(), event.getClickedBlock().getLocation())) {
             event.setCancelled(true);
-            event.getPlayer().sendMessage(ChatColor.RED + "You cannot interact on this island!");
+            event.getPlayer().sendMessage(msg.getMessage("protection.cannot-interact"));
         }
     }
 
@@ -93,7 +95,7 @@ public class IslandProtectionListener implements Listener {
         if (event.getDamager() instanceof Player attacker) {
             if (!canInteract(attacker, event.getEntity().getLocation())) {
                 event.setCancelled(true);
-                attacker.sendMessage(ChatColor.RED + "You cannot attack entities here!");
+                attacker.sendMessage(msg.getMessage("protection.cannot-attack"));
             }
         }
     }

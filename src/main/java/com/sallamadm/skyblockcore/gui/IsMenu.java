@@ -1,4 +1,4 @@
-package com.sallamadm.skyblockcore.listeners;
+package com.sallamadm.skyblockcore.gui;
 
 import com.sallamadm.skyblockcore.SkyblockCore;
 import com.sallamadm.skyblockcore.commands.IsCommand;
@@ -26,6 +26,14 @@ public class IsMenu implements Listener {
 
 
     /*
+          "ascent": 13,
+      "height": 254,
+      {
+      "type": "space",
+      "advances": {
+        "\uF808": -8
+      }
+    },
 
     warps 30-31-32 41-40-39
     island go 45-46-47-48-49
@@ -44,7 +52,7 @@ public class IsMenu implements Listener {
         int clickedSlot = event.getSlot();
         if (WARPS_SLOTS.contains(clickedSlot)) {
             player.closeInventory();
-            WarpMenuListener.openOwnerWarpMenu(player);
+            WarpMenu.openOwnerWarpMenu(player);
         } else if(ISLAND_GO_SLOTS.contains(clickedSlot)) {
             player.closeInventory();
             IsCommand.teleportToIsland(SkyblockCore.getInstance(), player);

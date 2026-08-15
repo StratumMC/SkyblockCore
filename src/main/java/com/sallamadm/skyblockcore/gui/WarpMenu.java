@@ -1,7 +1,8 @@
-package com.sallamadm.skyblockcore.listeners;
+package com.sallamadm.skyblockcore.gui;
 
 import com.sallamadm.skyblockcore.SkyblockCore;
 import com.sallamadm.skyblockcore.border.BorderManager;
+import com.sallamadm.skyblockcore.config.MessageManager;
 import com.sallamadm.skyblockcore.island.Island;
 import com.sallamadm.skyblockcore.island.Warp;
 import org.bukkit.Bukkit;
@@ -24,7 +25,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.*;
 
-public class WarpMenuListener implements Listener {
+public class WarpMenu implements Listener {
+    private static MessageManager msg = SkyblockCore.getInstance().getMessageManager();
 
     private static final String VISITOR_MENU_PREFIX = ChatColor.DARK_GREEN + "Island Warps: ";
     private static final String OWNER_MENU_TITLE = ChatColor.DARK_PURPLE + "Your Island Warps";
@@ -36,7 +38,7 @@ public class WarpMenuListener implements Listener {
     public static void openSelfTeleportWarpMenu(Player player) {
         Island island = SkyblockCore.getInstance().getIslandManager().getIsland(player.getUniqueId());
         if (island == null) {
-            player.sendMessage(ChatColor.RED + "You don't have an island!");
+            player.sendMessage(msg.getMessage("island.no-island"));
             return;
         }
 
@@ -65,18 +67,18 @@ public class WarpMenuListener implements Listener {
         OfflinePlayer targetOwner = Bukkit.getOfflinePlayer(targetName);
 
         if (targetOwner == null || (!targetOwner.hasPlayedBefore() && !targetOwner.isOnline())) {
-            visitor.sendMessage(ChatColor.RED + "Player not found!");
+            visitor.sendMessage(msg.getMessage("general.player-not-found"));
             return;
         }
 
         Island island = SkyblockCore.getInstance().getIslandManager().getIsland(targetOwner.getUniqueId());
         if (island == null) {
-            visitor.sendMessage(ChatColor.RED + "This player does not have an island!");
+            visitor.sendMessage(msg.getMessage("general.island-not-found"));
             return;
         }
 
         if (island.isLocked() && !visitor.isOp()) {
-            visitor.sendMessage(ChatColor.RED + "This island is locked by its owner!");
+            visitor.sendMessage(msg.getMessage("island.locked-by-owner"));
             return;
         }
 
@@ -103,7 +105,7 @@ public class WarpMenuListener implements Listener {
     public static void openOwnerWarpMenu(Player owner) {
         Island island = SkyblockCore.getInstance().getIslandManager().getIsland(owner.getUniqueId());
         if (island == null) {
-            owner.sendMessage(ChatColor.RED + "You don't have an island!");
+            owner.sendMessage(msg.getMessage("island.no-island"));
             return;
         }
 
@@ -237,7 +239,7 @@ public class WarpMenuListener implements Listener {
             }
 
             if (newWarpName == null || newWarpName.trim().isEmpty()) {
-                player.sendMessage(ChatColor.RED + "Warp name cannot be empty!");
+                player.sendMessage(msg.getMessage("warp.empty-name"));
                 return;
             }
 
@@ -246,7 +248,7 @@ public class WarpMenuListener implements Listener {
             Island island = SkyblockCore.getInstance().getIslandManager().getIsland(player.getUniqueId());
             if (island != null) {
                 island.renameWarp(oldWarpName, newWarpName);
-                player.sendMessage(ChatColor.GREEN + "Warp name updated to: " + ChatColor.YELLOW + newWarpName);
+                player.sendMessage(msg.getMessage("warp.renamed").replace("{name}", newWarpName));
 
                 Warp updatedWarp = island.getWarp(newWarpName);
                 if (updatedWarp != null) {
@@ -281,7 +283,7 @@ public class WarpMenuListener implements Listener {
 
             Island island = SkyblockCore.getInstance().getIslandManager().getIsland(targetPlayer.getUniqueId());
             if (island == null) {
-                player.sendMessage(ChatColor.RED + "Island not found!");
+                player.sendMessage(msg.getMessage("general.island-not-found"));
                 player.closeInventory();
                 return;
             }
@@ -293,7 +295,9 @@ public class WarpMenuListener implements Listener {
                 player.setFallDistance(0);
                 player.teleport(warp.getLocation());
                 BorderManager.applyIslandBorder(player, island);
-                player.sendMessage(ChatColor.GREEN + "Teleported to " + targetName + "'s warp: " + ChatColor.YELLOW + warp.getName());
+                player.sendMessage(msg.getMessage("warp.teleported")
+                        .replace("{target}", targetName)
+                        .replace("{warp}", warp.getName()));
             }
             player.closeInventory();
         }
@@ -335,18 +339,18 @@ public class WarpMenuListener implements Listener {
                 Location center = island.getCenterLocation();
 
                 if (center == null || !playerLoc.getWorld().equals(center.getWorld())) {
-                    player.sendMessage(ChatColor.RED + "You must be on your island to set warp location!");
+                    player.sendMessage(msg.getMessage("warp.must-be-on-island"));
                     return;
                 }
 
                 int radius = island.getIslandSize() / 2;
                 if (Math.abs(playerLoc.getBlockX() - center.getBlockX()) > radius || Math.abs(playerLoc.getBlockZ() - center.getBlockZ()) > radius) {
-                    player.sendMessage(ChatColor.RED + "You can only set warp location within your island boundary!");
+                    player.sendMessage(msg.getMessage("warp.outside-boundary"));
                     return;
                 }
 
                 warp.setLocation(playerLoc);
-                player.sendMessage(ChatColor.GREEN + "Warp location updated to your current position!");
+                player.sendMessage(msg.getMessage("warp.location-updated"));
                 openManageWarpMenu(player, warp);
             }
 
@@ -354,10 +358,11 @@ public class WarpMenuListener implements Listener {
             else if (slot == 4) {
                 ItemStack handItem = player.getInventory().getItemInMainHand();
                 if (handItem.getType() == Material.AIR) {
-                    player.sendMessage(ChatColor.RED + "You must hold an item in your main hand to set as icon!");
+                    player.sendMessage(msg.getMessage("warp.hold-item-error"));
                 } else {
                     warp.setIcon(handItem.getType());
-                    player.sendMessage(ChatColor.GREEN + "Warp icon set to: " + ChatColor.YELLOW + handItem.getType().name());
+                    player.sendMessage(msg.getMessage("warp.icon-updated")
+                            .replace("{icon}", handItem.getType().name()));
                     openManageWarpMenu(player, warp);
                 }
             }
@@ -365,18 +370,16 @@ public class WarpMenuListener implements Listener {
             // visitor visible
             else if (slot == 6) {
                 warp.setVisible(!warp.isVisible());
-                if (warp.isVisible()) {
-                    player.sendMessage(ChatColor.GREEN + "Warp is now ENABLED and visible to visitors.");
-                } else {
-                    player.sendMessage(ChatColor.RED + "Warp is now DISABLED and hidden from visitors.");
-                }
+                player.sendMessage(msg.getMessage("warp.visibility-toggle")
+                        .replace("{status}", warp.isVisible() ? "ENABLED" : "DISABLED"));
                 openManageWarpMenu(player, warp);
             }
 
             // warp del
             else if (slot == 8) {
                 island.removeWarp(warp.getName());
-                player.sendMessage(ChatColor.YELLOW + "Warp " + ChatColor.RED + warp.getName() + ChatColor.YELLOW + " has been deleted.");
+                player.sendMessage(msg.getMessage("warp.deleted")
+                        .replace("{warp}", warp.getName()));
                 openOwnerWarpMenu(player);
             }
         }
