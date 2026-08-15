@@ -4,13 +4,12 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class IslandManager {
 
     private final Map<UUID, Island> islands = new HashMap<>();
+    private final List<Integer> availableGridIndices = new ArrayList<>();
     private int nextGridIndex = 0;
 
     public Island getIsland(UUID ownerUUID) {
@@ -29,10 +28,13 @@ public class IslandManager {
 
     public void removeIsland(UUID ownerUUID) {
         Island island = islands.get(ownerUUID);
-        if (island != null && island.getCenterLocation() != null) {
-            clearIslandBlocks(island);
+        if (island != null) {
+            if (island.getCenterLocation() != null) {
+                clearIslandBlocks(island);
+            }
+            availableGridIndices.add(island.getGridIndex());
+            islands.remove(ownerUUID);
         }
-        islands.remove(ownerUUID);
     }
 
     private void clearIslandBlocks(Island island) {
@@ -53,15 +55,23 @@ public class IslandManager {
         }
     }
 
+    public int fetchNextGridIndex() {
+        if (!availableGridIndices.isEmpty()) {
+            return availableGridIndices.remove(0);
+        }
+        int indexToUse = nextGridIndex;
+        nextGridIndex++;
+        return indexToUse;
+    }
 
-    public Location getNextIslandLocation(World skyblockWorld) {
+    public Location calculateLocationFromIndex(World skyblockWorld, int gridIndex) {
         int distance = 1000;
         int x = 0, z = 0;
 
-        if (nextGridIndex > 0) {
-            int n = (int) Math.ceil((Math.sqrt(nextGridIndex + 1) - 1) / 2);
+        if (gridIndex > 0) {
+            int n = (int) Math.ceil((Math.sqrt(gridIndex + 1) - 1) / 2);
             int p = 2 * n;
-            int k = nextGridIndex - (p - 1) * (p - 1);
+            int k = gridIndex - (p - 1) * (p - 1);
 
             if (k < p) { x = n * distance; z = (-n + k + 1) * distance; }
             else if (k < 2 * p) { x = (n - (k - p + 1)) * distance; z = n * distance; }
@@ -69,7 +79,6 @@ public class IslandManager {
             else { x = (-n + (k - 3 * p + 1)) * distance; z = -n * distance; }
         }
 
-        nextGridIndex++;
         return new Location(skyblockWorld, x, 70, z);
     }
 
@@ -84,5 +93,7 @@ public class IslandManager {
     public void setNextGridIndex(int index) {
         this.nextGridIndex = index;
     }
-
+    public List<Integer> getAvailableGridIndices() {
+        return availableGridIndices;
+    }
 }

@@ -1,5 +1,6 @@
 package com.sallamadm.skyblockcore.island;
 
+import com.sallamadm.skyblockcore.SkyblockCore;
 import org.bukkit.Location;
 import org.bukkit.Material;
 
@@ -23,35 +24,38 @@ public class Warp {
         this.visible = visible;
     }
 
+    private void autoSave() {
+        if (SkyblockCore.getInstance() != null && SkyblockCore.getInstance().getDataManager() != null) {
+            SkyblockCore.getInstance().getDataManager().saveData();
+        }
+    }
+
     public String getName() {
         return name;
     }
-
     public void setName(String name) {
         this.name = name;
+        autoSave();
     }
-
     public Location getLocation() {
         return location;
     }
-
     public void setLocation(Location location) {
         this.location = location;
+        autoSave();
     }
-
     public Material getIcon() {
         return icon;
     }
-
     public void setIcon(Material icon) {
         this.icon = icon;
+        autoSave();
     }
-
     public boolean isVisible() {
         return visible;
     }
-
     public void setVisible(boolean visible) {
         this.visible = visible;
+        autoSave();
     }
 }

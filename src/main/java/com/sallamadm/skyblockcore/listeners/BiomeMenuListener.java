@@ -82,6 +82,8 @@ public class BiomeMenuListener implements Listener {
 
             island.setBiome(selectedBiome);
 
+            SkyblockCore.getInstance().getDataManager().saveData();
+
             changeIslandBiome(island, selectedBiome);
 
             player.sendMessage(ChatColor.GREEN + "Island biome set to " + ChatColor.YELLOW + biomeName + ChatColor.GREEN + "!");

@@ -20,7 +20,6 @@ import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryType;
-import org.bukkit.event.inventory.PrepareAnvilEvent;
 import org.bukkit.inventory.AnvilInventory;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -35,7 +34,6 @@ public class WarpMenuListener implements Listener {
     private static final String MANAGE_MENU_PREFIX = ChatColor.DARK_BLUE + "Manage Warp: ";
 
     private static final Map<UUID, String> PENDING_RENAME_WARPS = new HashMap<>();
-
     private static final Map<UUID, BlockData> ORIGINAL_BLOCK_DATA = new HashMap<>();
 
     public static void openSelfTeleportWarpMenu(Player player) {
@@ -133,7 +131,6 @@ public class WarpMenuListener implements Listener {
         owner.openInventory(inv);
     }
 
-    // gui
     public static void openManageWarpMenu(Player owner, Warp warp) {
         Inventory inv = Bukkit.createInventory(null, 9, MANAGE_MENU_PREFIX + warp.getName());
 

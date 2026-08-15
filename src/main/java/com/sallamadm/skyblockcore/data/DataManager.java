@@ -13,6 +13,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 
 public class DataManager {
@@ -44,9 +45,11 @@ public class DataManager {
     public void saveData() {
         config.set("islands", null);
         config.set("nextGridIndex", plugin.getIslandManager().getNextGridIndex());
+        config.set("availableGridIndices", plugin.getIslandManager().getAvailableGridIndices());
 
         for (Island island : plugin.getIslandManager().getAllIslands().values()) {
             String path = "islands." + island.getOwnerUUID().toString();
+            config.set(path + ".gridIndex", island.getGridIndex());
             config.set(path + ".size", island.getIslandSize());
             config.set(path + ".level", island.getLevel());
             config.set(path + ".name", island.getIslandName());
@@ -100,6 +103,12 @@ public class DataManager {
             plugin.getIslandManager().setNextGridIndex(config.getInt("nextGridIndex"));
         }
 
+        if (config.contains("availableGridIndices")) {
+            List<Integer> savedIndices = config.getIntegerList("availableGridIndices");
+            plugin.getIslandManager().getAvailableGridIndices().clear();
+            plugin.getIslandManager().getAvailableGridIndices().addAll(savedIndices);
+        }
+
         if (!config.contains("islands")) return;
 
         for (String uuidStr : config.getConfigurationSection("islands").getKeys(false)) {
@@ -108,6 +117,7 @@ public class DataManager {
             UUID uuid = UUID.fromString(uuidStr);
             Island island = plugin.getIslandManager().createIsland(uuid);
 
+            island.setGridIndex(config.getInt(path + ".gridIndex", 0));
             String islandName = config.getString(path + ".name", "Island");
             island.setIslandName(islandName);
 

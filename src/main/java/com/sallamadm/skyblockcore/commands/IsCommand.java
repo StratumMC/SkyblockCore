@@ -5,7 +5,6 @@ import com.sallamadm.skyblockcore.border.BorderManager;
 import com.sallamadm.skyblockcore.events.IslandEvents;
 import com.sallamadm.skyblockcore.island.Island;
 import com.sallamadm.skyblockcore.island.Warp;
-import com.sallamadm.skyblockcore.listeners.IslandSettingsMenuListener;
 import com.sallamadm.skyblockcore.listeners.WarpMenuListener;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.CommandPermission;
@@ -82,6 +81,7 @@ public class IsCommand {
                                     }
                                     String newName = (String) args.get("name");
                                     island.setIslandName(newName);
+                                    plugin.getDataManager().saveData();
                                     player.sendMessage(ChatColor.GREEN + "Your island name has been changed to: " + ChatColor.YELLOW + newName);
                                 })
                 ))
@@ -114,8 +114,11 @@ public class IsCommand {
                                         return;
                                     }
 
-                                    Location islandLoc = plugin.getIslandManager().getNextIslandLocation(skyblockWorld);
+                                    int gridIndex = plugin.getIslandManager().fetchNextGridIndex();
+                                    Location islandLoc = plugin.getIslandManager().calculateLocationFromIndex(skyblockWorld, gridIndex);
+
                                     Island island = plugin.getIslandManager().createIsland(player.getUniqueId());
+                                    island.setGridIndex(gridIndex);
                                     island.setCenterLocation(islandLoc);
 
                                     buildIslandStructure(skyblockWorld, islandLoc, player, island);
@@ -125,6 +128,9 @@ public class IsCommand {
                                     island.setIslandName(player.getName() + "'s Island");
 
                                     Bukkit.getPluginManager().callEvent(new IslandEvents.Create(player, island));
+
+                                    plugin.getDataManager().saveData();
+
                                     player.sendMessage(ChatColor.GREEN + "Created your island.");
                                 })
                 ))
@@ -142,6 +148,9 @@ public class IsCommand {
                                     Bukkit.getPluginManager().callEvent(new IslandEvents.Delete(player, islandToDelete));
                                     BorderManager.removeBorder(player);
                                     plugin.getIslandManager().removeIsland(player.getUniqueId());
+
+                                    plugin.getDataManager().saveData();
+
                                     plugin.getScoreboardManager().updateScoreboard(player);
 
                                     World mainWorld = Bukkit.getWorlds().get(0);
@@ -276,7 +285,6 @@ public class IsCommand {
                 .withSubcommand(createSubCommand("visit [target] [warp]", "Visit someones island.",
                         new CommandAPICommand("visit")
                                 .executesPlayer((player, args) -> {
-
                                     WarpMenuListener.openSelfTeleportWarpMenu(player);
                                 })
                                 .withOptionalArguments(new StringArgument("target"))
@@ -290,7 +298,6 @@ public class IsCommand {
                 .withSubcommand(createSubCommand("warp [target] [warp]", "Teleport to warps.",
                         new CommandAPICommand("warp")
                                 .executesPlayer((player, args) -> {
-
                                     WarpMenuListener.openSelfTeleportWarpMenu(player);
                                 })
                                 .withOptionalArguments(new StringArgument("target"))
@@ -299,20 +306,6 @@ public class IsCommand {
                                     handleWarpTeleportCommand(player, args, plugin);
                                 })
                 ))
-
-                // /is settings
-                .withSubcommand(createSubCommand("settings", "Opens your island settings GUI.",
-                        new CommandAPICommand("settings")
-                                .executesPlayer((player, args) -> {
-                                    Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
-                                    if (island == null) {
-                                        player.sendMessage(ChatColor.RED + "You don't have an island!");
-                                        return;
-                                    }
-                                    IslandSettingsMenuListener.openSettingsMenu(player);
-                                })
-                ))
-
 
                 // ADMIN COMMANDS
 
@@ -418,8 +411,8 @@ public class IsCommand {
         for (int x = -3; x <= 2; x++) {
             for (int z = -3; z <= 2; z++) {
 
-                boolean isBaseRectangle = (x >= -3 && x <= 2) && (z >= -3 && z <= -1); // 6x3 area
-                boolean isTopExtension = (x >= -3 && x <= -1) && (z >= 0 && z <= 2);   // 3x3 area
+                boolean isBaseRectangle = (x >= -3 && x <= 2) && (z >= -3 && z <= -1);
+                boolean isTopExtension = (x >= -3 && x <= -1) && (z >= 0 && z <= 2);
 
                 if (isBaseRectangle || isTopExtension) {
                     world.getBlockAt(cx + x, cy - 2, cz + z).setType(Material.DIRT);
@@ -458,7 +451,6 @@ public class IsCommand {
         player.teleport(spawnLocation);
     }
 
-    // warp thing
     private static void handleWarpTeleportCommand(Player player, dev.jorel.commandapi.executors.CommandArguments args, SkyblockCore plugin) {
         String targetName = (String) args.get("target");
         String warpName = (String) args.get("warp");

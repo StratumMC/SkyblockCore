@@ -1,5 +1,6 @@
 package com.sallamadm.skyblockcore.island;
 
+import com.sallamadm.skyblockcore.SkyblockCore;
 import org.bukkit.Location;
 import org.bukkit.block.Biome;
 
@@ -10,6 +11,7 @@ import java.util.UUID;
 public class Island {
     private final UUID ownerUUID;
     private int level;
+    private int gridIndex;
     private Location centerLocation;
     private Location spawnLocation;
     private int islandSize;
@@ -30,36 +32,48 @@ public class Island {
         this.biome = Biome.PLAINS;
     }
 
+    private void autoSave() {
+        if (SkyblockCore.getInstance() != null && SkyblockCore.getInstance().getDataManager() != null) {
+            SkyblockCore.getInstance().getDataManager().saveData();
+        }
+    }
+
     public UUID getOwnerUUID() {
         return ownerUUID;
     }
-
     public int getLevel() {
         return level;
     }
-
     public void setLevel(int level) {
         this.level = level;
+        autoSave();
     }
-
     public void addLevel(int level) {
         this.level += level;
+        autoSave();
+    }
+
+    public int getGridIndex() {
+        return gridIndex;
+    }
+    public void setGridIndex(int gridIndex) {
+        this.gridIndex = gridIndex;
+        autoSave();
     }
 
     public Location getCenterLocation() {
         return centerLocation;
     }
-
     public void setCenterLocation(Location centerLocation) {
         this.centerLocation = centerLocation;
+        autoSave();
     }
-
     public Location getSpawnLocation() {
         return spawnLocation != null ? spawnLocation : centerLocation;
     }
-
     public void setSpawnLocation(Location spawnLocation) {
         this.spawnLocation = spawnLocation;
+        autoSave();
     }
 
     public int getIslandSize() {
@@ -67,6 +81,7 @@ public class Island {
     }
     public void setIslandSize(int islandSize) {
         this.islandSize = islandSize;
+        autoSave();
     }
 
     public String getIslandName() {
@@ -74,6 +89,7 @@ public class Island {
     }
     public void setIslandName(String islandName) {
         this.islandName = islandName;
+        autoSave();
     }
 
     public Biome getBiome() {
@@ -81,6 +97,7 @@ public class Island {
     }
     public void setBiome(Biome biome) {
         this.biome = biome;
+        autoSave();
     }
 
     public boolean isLocked() {
@@ -88,8 +105,8 @@ public class Island {
     }
     public void setLocked(boolean locked) {
         this.locked = locked;
+        autoSave();
     }
-
 
     public Map<String, Warp> getWarps() {
         return warps;
@@ -99,16 +116,18 @@ public class Island {
     }
     public void addWarp(Warp warp) {
         warps.put(warp.getName().toLowerCase(), warp);
+        autoSave();
     }
     public void removeWarp(String name) {
         warps.remove(name.toLowerCase());
+        autoSave();
     }
     public void renameWarp(String oldName, String newName) {
         Warp warp = warps.remove(oldName.toLowerCase());
         if (warp != null) {
             warp.setName(newName);
             warps.put(newName.toLowerCase(), warp);
+            autoSave();
         }
     }
-
 }
