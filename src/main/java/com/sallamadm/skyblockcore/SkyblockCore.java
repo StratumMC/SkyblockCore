@@ -8,8 +8,6 @@ import com.sallamadm.skyblockcore.scoreboard.ScoreboardManager;
 import com.sallamadm.skyblockcore.world.WorldManager;
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIBukkitConfig;
-import dev.jorel.commandapi.CommandAPIConfig;
-import org.bukkit.command.Command;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class SkyblockCore extends JavaPlugin {
@@ -46,7 +44,7 @@ public final class SkyblockCore extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new IslandTeleportListener(this), this);
         getServer().getPluginManager().registerEvents(new IslandProtectionListener(this), this);
         getServer().getPluginManager().registerEvents(new WarpMenuListener(), this);
-        getServer().getPluginManager().registerEvents(new IslandSettingsMenuListener(), this);
+        getServer().getPluginManager().registerEvents(new IsMenu(), this);
 
         getLogger().info("Skyblock Core is now activated.");
     }

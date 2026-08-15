@@ -5,6 +5,7 @@ import com.sallamadm.skyblockcore.border.BorderManager;
 import com.sallamadm.skyblockcore.events.IslandEvents;
 import com.sallamadm.skyblockcore.island.Island;
 import com.sallamadm.skyblockcore.island.Warp;
+import com.sallamadm.skyblockcore.listeners.IsMenu;
 import com.sallamadm.skyblockcore.listeners.WarpMenuListener;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.CommandPermission;
@@ -366,12 +367,7 @@ public class IsCommand {
 
                 // /is
                 .executesPlayer((player, args) -> {
-                    Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
-                    if (island == null) {
-                        sendHelpMenu(player);
-                    } else {
-                        teleportToIsland(plugin, player);
-                    }
+                    IsMenu.openIsMenu(player);
                 })
                 .register();
     }
@@ -381,7 +377,7 @@ public class IsCommand {
         return command;
     }
 
-    private static void teleportToIsland(SkyblockCore plugin, Player player) {
+    public static void teleportToIsland(SkyblockCore plugin, Player player) {
         Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
         if (island != null && island.getSpawnLocation() != null) {
             player.setFallDistance(0);
