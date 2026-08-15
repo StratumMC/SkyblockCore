@@ -18,9 +18,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.inventory.InventoryType;
-import org.bukkit.inventory.AnvilInventory;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -141,7 +138,7 @@ public class WarpMenuListener implements Listener {
             nameMeta.setDisplayName(ChatColor.GOLD + "Change Name");
             nameMeta.setLore(Arrays.asList(
                     ChatColor.GRAY + "Current Name: " + ChatColor.YELLOW + warp.getName(),
-                    ChatColor.YELLOW + "Click to open Anvil and change name."
+                    ChatColor.YELLOW + "Click to write a name on sign."
             ));
             nameItem.setItemMeta(nameMeta);
         }
@@ -263,60 +260,10 @@ public class WarpMenuListener implements Listener {
     }
 
     @EventHandler
-    public void onInventoryClose(InventoryCloseEvent event) {
-        if (event.getPlayer() instanceof Player player) {
-            if (PENDING_RENAME_WARPS.containsKey(player.getUniqueId()) && event.getInventory().getType() == InventoryType.ANVIL) {
-                event.getInventory().clear();
-                PENDING_RENAME_WARPS.remove(player.getUniqueId());
-            }
-        }
-    }
-
-    @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         String title = event.getView().getTitle();
 
         if (!(event.getWhoClicked() instanceof Player player)) return;
-
-        if (event.getInventory().getType() == InventoryType.ANVIL && PENDING_RENAME_WARPS.containsKey(player.getUniqueId())) {
-
-            if (event.getRawSlot() == 0 || event.getRawSlot() == 1) {
-                event.setCancelled(true);
-                return;
-            }
-
-            if (event.getRawSlot() == 2) {
-                event.setCancelled(true);
-
-                if (event.getInventory() instanceof AnvilInventory anvilInv) {
-                    String renameText = anvilInv.getRenameText();
-
-                    if (renameText != null && !renameText.trim().isEmpty()) {
-                        String oldWarpName = PENDING_RENAME_WARPS.remove(player.getUniqueId());
-
-                        if (oldWarpName != null) {
-                            Island island = SkyblockCore.getInstance().getIslandManager().getIsland(player.getUniqueId());
-                            if (island != null) {
-                                island.renameWarp(oldWarpName, renameText.trim());
-                                player.sendMessage(ChatColor.GREEN + "Warp name updated to: " + ChatColor.YELLOW + renameText.trim());
-
-                                anvilInv.clear();
-                                player.closeInventory();
-
-                                Warp updatedWarp = island.getWarp(renameText.trim());
-                                if (updatedWarp != null) {
-                                    openManageWarpMenu(player, updatedWarp);
-                                    return;
-                                }
-                            }
-                        }
-                    }
-                }
-                event.getInventory().clear();
-                player.closeInventory();
-            }
-            return;
-        }
 
         if (!title.startsWith(VISITOR_MENU_PREFIX) && !title.equals(OWNER_MENU_TITLE) && !title.startsWith(MANAGE_MENU_PREFIX)) {
             return;
