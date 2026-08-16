@@ -69,6 +69,12 @@ auth:
   login-success: "&aBaşarıyla giriş yaptın, iyi oyunlar!"
   wrong-password: "&cGirdiğin şifre yanlış, tekrar dene."
   invalid-email: "&cGirdiğiniz e-posta adresi geçerli değil!"
+
+menu:
+  warp_title: "&8Warps (Sayfa %page%)"
+  previous_page: "&cÖnceki sayfa"
+  next_page: "&aSonraki sayfa"
+  main_menu: "&eAna sayfa"
 #upgrades:
 # success: "&aSuccessfully upgraded!" secret update sssh!
 #not-enough-money: "&cYou don't have enough money for this upgrade!"
