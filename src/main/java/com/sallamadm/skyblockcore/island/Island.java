@@ -35,7 +35,7 @@ public class Island {
     private void autoSave() {
         if (SkyblockCore.getInstance() != null && SkyblockCore.getInstance().getDataManager() != null) {
             if (!SkyblockCore.getInstance().getDataManager().isLoading()) {
-                SkyblockCore.getInstance().getDataManager().saveData();
+                SkyblockCore.getInstance().getDataManager().saveIslandAsync(this);
             }
         }
     }

@@ -26,10 +26,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.bukkit.block.Biome.PLAINS;
 
@@ -41,7 +38,11 @@ public class IsCommand {
     public static void registerCommand(SkyblockCore plugin) {
         HELP_MAP.clear();
 
-
+        /*ArgumentSuggestions<CommandSender> onlinePlayerSuggestions = ArgumentSuggestions.strings(info ->
+                Bukkit.getOnlinePlayers().stream().map(Player::getName).toArray(String[]::new)
+        );
+        is visit ve warpa auto complete fakat neden calısmadı bılmyorum
+        */
 
         ArgumentSuggestions<CommandSender> warpSuggestions = ArgumentSuggestions.strings(info -> {
             String targetName = info.previousArgs().get("target") != null ? (String) info.previousArgs().get("target") : "";
@@ -280,12 +281,9 @@ public class IsCommand {
                 ))
 
                 // /is visit
-                .withSubcommand(createSubCommand("visit [target] [warp]", "Başka birinin adasını ziyaret edin.",
+                .withSubcommand(createSubCommand("visit <target> [warp]", "Başka birinin adasını ziyaret edin.",
                         new CommandAPICommand("visit")
-                                .executesPlayer((player, args) -> {
-                                    WarpMenu.openSelfTeleportWarpMenu(player);
-                                })
-                                .withOptionalArguments(new StringArgument("target"))
+                                .withArguments(new StringArgument("target")) //replaceSuggestions(onlinePlayerSuggestions)
                                 .withOptionalArguments(new StringArgument("warp").replaceSuggestions(warpSuggestions))
                                 .executesPlayer((player, args) -> {
                                     handleWarpTeleportCommand(player, args, plugin);
@@ -293,12 +291,9 @@ public class IsCommand {
                 ))
 
                 // /is warp
-                .withSubcommand(createSubCommand("warp [target] [warp]", "Warp'a ışınlanın.",
+                .withSubcommand(createSubCommand("warp <target> [warp]", "Warp'a ışınlanın.",
                         new CommandAPICommand("warp")
-                                .executesPlayer((player, args) -> {
-                                    WarpMenu.openSelfTeleportWarpMenu(player);
-                                })
-                                .withOptionalArguments(new StringArgument("target"))
+                                .withArguments(new StringArgument("target")) //.replaceSuggestions(onlinePlayerSuggestions)
                                 .withOptionalArguments(new StringArgument("warp").replaceSuggestions(warpSuggestions))
                                 .executesPlayer((player, args) -> {
                                     handleWarpTeleportCommand(player, args, plugin);
@@ -460,12 +455,7 @@ public class IsCommand {
         String warpName = (String) args.get("warp");
 
         if (targetName == null || targetName.isEmpty()) {
-            WarpMenu.openSelfTeleportWarpMenu(player);
-            return;
-        }
-
-        if (warpName == null || warpName.isEmpty()) {
-            WarpMenu.openVisitorWarpMenu(player, targetName);
+            player.sendMessage(msg.getMessage("general.player-not-found"));
             return;
         }
 
@@ -477,7 +467,10 @@ public class IsCommand {
             player.sendMessage(msg.getMessage("general.player-not-found"));
             return;
         }
-
+        if (warpName == null || warpName.isEmpty()) {
+            WarpMenu.openVisitorWarpMenu(player, targetName);
+            return;
+        }
         if (island.isLocked() && !player.isOp()) {
             player.sendMessage(msg.getMessage("island.locked-by-owner"));
             return;

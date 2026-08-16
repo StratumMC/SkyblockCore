@@ -33,6 +33,17 @@ public final class SkyblockCore extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
+
+        getConfig().addDefault("mysql.host", "localhost");
+        getConfig().addDefault("mysql.port", 3306);
+        getConfig().addDefault("mysql.database", "skyblock");
+        getConfig().addDefault("mysql.username", "root");
+        getConfig().addDefault("mysql.password", "");
+        getConfig().options().copyDefaults(true);
+        saveConfig();
+
+
+
         this.messageManager = new MessageManager(this);
         this.islandManager = new IslandManager();
         this.scoreboardManager = new ScoreboardManager(this);
@@ -62,7 +73,8 @@ public final class SkyblockCore extends JavaPlugin {
     @Override
     public void onDisable() {
         if(dataManager != null) {
-            dataManager.saveData();
+            dataManager.saveDataSync();
+            dataManager.closeConnection();
             getLogger().info("SkyblockCore datas saved in islandData.yml.");
         }
 

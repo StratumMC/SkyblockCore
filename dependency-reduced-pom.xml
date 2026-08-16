@@ -35,7 +35,6 @@
           </execution>
         </executions>
         <configuration>
-          <minimizeJar>true</minimizeJar>
           <relocations>
             <relocation>
               <pattern>dev.jorel.commandapi</pattern>

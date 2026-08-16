@@ -1,5 +1,6 @@
 package com.sallamadm.skyblockcore.island;
 
+import com.sallamadm.skyblockcore.SkyblockCore;
 import com.sallamadm.skyblockcore.gui.BiomeMenu;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -33,31 +34,65 @@ public class IslandManager {
     public void removeIsland(UUID ownerUUID) {
         Island island = islands.get(ownerUUID);
         if (island != null) {
-            if (island.getCenterLocation() != null) {
-                clearIslandBlocks(island);
-            }
-            BiomeMenu.changeIslandBiome(island, PLAINS);
-            availableGridIndices.add(island.getGridIndex());
             islands.remove(ownerUUID);
+            SkyblockCore.getInstance().getDataManager().deleteIsland(ownerUUID);
+
+            if (island.getCenterLocation() != null) {
+                BiomeMenu.changeIslandBiome(island, org.bukkit.block.Biome.PLAINS);
+                clearIslandBlocks(island);
+            } else {
+                availableGridIndices.add(island.getGridIndex());
+                SkyblockCore.getInstance().getDataManager().saveData();
+            }
         }
     }
 
-    private void clearIslandBlocks(Island island) {
-        Location loc = island.getCenterLocation();
-        World world = loc.getWorld();
-        if (world == null) return;
+    public void clearIslandBlocks(Island island) {
+        Location center = island.getCenterLocation();
+        if (center == null || center.getWorld() == null) return;
 
-        int cx = loc.getBlockX();
-        int cy = loc.getBlockY();
-        int cz = loc.getBlockZ();
+        org.bukkit.World world = center.getWorld();
+        int radius = island.getIslandSize() / 2;
 
-        for (int x = -5; x <= 5; x++) {
-            for (int y = -5; y <= 5; y++) {
-                for (int z = -5; z <= 5; z++) {
-                    world.getBlockAt(cx + x, cy + y, cz + z).setType(Material.AIR);
+        int minX = center.getBlockX() - radius;
+        int maxX = center.getBlockX() + radius;
+        int minZ = center.getBlockZ() - radius;
+        int maxZ = center.getBlockZ() + radius;
+
+        int minY = world.getMinHeight();
+        int maxY = world.getMaxHeight();
+
+        new org.bukkit.scheduler.BukkitRunnable() {
+            int currentX = minX;
+
+            @Override
+            public void run() {
+                int blocksProcessedThisTick = 0;
+                int maxBlocksPerTick = 15000;
+
+                while (currentX <= maxX) {
+                    for (int z = minZ; z <= maxZ; z++) {
+                        for (int y = minY; y <= maxY; y++) {
+                            org.bukkit.block.Block block = world.getBlockAt(currentX, y, z);
+                            if (block.getType() != org.bukkit.Material.AIR) {
+                                block.setType(org.bukkit.Material.AIR, false);
+                            }
+                        }
+                    }
+                    currentX++;
+
+                    blocksProcessedThisTick += (maxZ - minZ) * (maxY - minY);
+
+                    if (blocksProcessedThisTick >= maxBlocksPerTick) {
+                        return;
+                    }
                 }
+                this.cancel();
+                availableGridIndices.add(island.getGridIndex());
+                SkyblockCore.getInstance().getDataManager().saveData();
+                SkyblockCore.getInstance().getLogger().info("Grid " + island.getGridIndex() + " temizlendi ve yeni oyunculara acildi.");
             }
-        }
+        }.runTaskTimer(SkyblockCore.getInstance(), 0L, 1L);
     }
 
     public int fetchNextGridIndex() {
