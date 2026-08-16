@@ -4,9 +4,8 @@ import com.sallamadm.skyblockcore.SkyblockCore;
 import org.bukkit.Location;
 import org.bukkit.block.Biome;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class Island {
     private final UUID ownerUUID;
@@ -19,6 +18,7 @@ public class Island {
     private Biome biome;
     private boolean locked = false;
     private final Map<String, Warp> warps = new HashMap<>();
+    private final Set<UUID> bannedPlayers = new HashSet<>();
 
     public Island(UUID ownerUUID) {
         this.ownerUUID = ownerUUID;
@@ -130,6 +130,35 @@ public class Island {
             warp.setName(newName);
             warps.put(newName.toLowerCase(), warp);
             autoSave();
+        }
+    }
+
+    public Set<UUID> getBannedPlayers() {
+        return bannedPlayers;
+    }
+    public boolean isBanned(UUID uuid) {
+        return bannedPlayers.contains(uuid);
+    }
+    public void banPlayer(UUID uuid) {
+        bannedPlayers.add(uuid);
+        autoSave();
+    }
+    public void unbanPlayer(UUID uuid) {
+        bannedPlayers.remove(uuid);
+        autoSave();
+    }
+    public String getBannedPlayersAsString() {
+        return bannedPlayers.stream()
+                .map(UUID::toString)
+                .collect(Collectors.joining(","));
+    }
+    public void loadBannedPlayersFromString(String data) {
+        bannedPlayers.clear();
+        if (data == null || data.isEmpty()) return;
+        for (String uuidStr : data.split(",")) {
+            try {
+                bannedPlayers.add(UUID.fromString(uuidStr.trim()));
+            } catch (IllegalArgumentException ignored) {}
         }
     }
 }

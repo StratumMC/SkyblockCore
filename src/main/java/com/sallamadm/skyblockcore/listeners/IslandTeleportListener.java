@@ -37,10 +37,17 @@ public class IslandTeleportListener implements Listener {
         if (targetIsland != null) {
             boolean isOwner = targetIsland.getOwnerUUID().equals(player.getUniqueId());
 
-            if (!isOwner && targetIsland.isLocked() && !player.isOp()) {
-                event.setCancelled(true);
-                player.sendMessage(SkyblockCore.getInstance().getMessageManager().getMessage("island.locked-by-owner"));
-                return;
+            if (!isOwner && !player.isOp()) {
+                if (targetIsland.isBanned(player.getUniqueId())) {
+                    event.setCancelled(true);
+                    player.sendMessage(plugin.getMessageManager().getMessage("island.banned"));
+                    return;
+                }
+                if (targetIsland.isLocked()) {
+                    event.setCancelled(true);
+                    player.sendMessage(plugin.getMessageManager().getMessage("island.locked-by-owner"));
+                    return;
+                }
             }
             BorderManager.applyIslandBorder(player, targetIsland);
         } else {

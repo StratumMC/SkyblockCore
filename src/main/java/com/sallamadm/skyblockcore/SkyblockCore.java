@@ -1,6 +1,8 @@
 package com.sallamadm.skyblockcore;
 
 import com.sallamadm.skyblockcore.commands.IsCommand;
+import com.sallamadm.skyblockcore.commands.LoginCommand;
+import com.sallamadm.skyblockcore.commands.RegisterCommand;
 import com.sallamadm.skyblockcore.config.MessageManager;
 import com.sallamadm.skyblockcore.data.DataManager;
 import com.sallamadm.skyblockcore.gui.BiomeMenu;
@@ -54,6 +56,8 @@ public final class SkyblockCore extends JavaPlugin {
         this.dataManager.loadData();
 
         IsCommand.registerCommand(this);
+        RegisterCommand.registerCommand(this);
+        LoginCommand.registerCommand(this);
 
 
         getServer().getPluginManager().registerEvents(new BiomeMenu(), this);
@@ -61,6 +65,7 @@ public final class SkyblockCore extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new VoidFallListener(this), this);
         getServer().getPluginManager().registerEvents(new IslandTeleportListener(this), this);
         getServer().getPluginManager().registerEvents(new IslandProtectionListener(this), this);
+        getServer().getPluginManager().registerEvents(new AuthListener(this), this);
 
         //guis
         getServer().getPluginManager().registerEvents(new WarpMenu(), this);

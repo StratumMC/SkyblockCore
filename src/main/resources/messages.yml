@@ -21,6 +21,15 @@ island:
   already-unlocked: "&cAdan zaten ziyaretçilere açık!"
   locked-by-owner: "&cBu ada sahibi tarafından ziyaretçilere kapanmış!"
   delete-cancelled: "&eAda silme iptal edildi."
+  kicked: "&aBu adadan atıldınız."
+  kick-success: "&e{target} &aadlı oyuncu adadan atıldı."
+  cannot-kick-self: "&cKendini adadan atamazsın!"
+  target-not-on-island: "&cBu oyuncu şu anda senin adanda değil!"
+  banned: "&cBu adaya girişin kalıcı olarak yasaklanmış!"
+  ban-success: "&e{target} &aadlı oyuncu banlandı."
+  unban-success: "&e{target} &aadlı oyuncunun banı kaldırıldı."
+  not-banned: "&cBu oyuncu banlı değil!"
+  cannot-ban-self: "&cKendini banlayamazsın!"
 
 warp:
   created: "&aWarp &e{warp} &aoluşturuldu! Şu anda kullancılardan gizli."
@@ -46,6 +55,17 @@ protection:
   cannot-build: "&cBu adada blok kırıp/koyamazsınız!"
   cannot-interact: "&cBu adadaki eşyalar ile etkileşime geçemezsiniz!"
   cannot-attack: "&cBu adada saldırı yapamazsınız!"
+
+auth:
+  register-prompt: "&cSunucuya kayıt olmalısın! Lütfen /register <şifre> <eposta> komutunu kullan."
+  login-prompt: "&cLütfen giriş yapmak için /login <şifre> komutunu kullan."
+  plese-register: "&cOynamak için önce giriş yapmalı veya kayıt olmalısın!"
+  already-registered: "&cZaten kayıtlı bir hesabın var, lütfen giriş yap."
+  already-logged-in: "&cZaten hesabına giriş yapmış durumdasın."
+  success: "&aBaşarıyla kayıt oldun ve giriş yaptın! İyi oyunlar."
+  login-success: "&aBaşarıyla giriş yaptın, iyi oyunlar!"
+  wrong-password: "&cGirdiğin şifre yanlış, tekrar dene."
+  invalid-email: "&cGirdiğiniz e-posta adresi geçerli değil!"
 #upgrades:
 # success: "&aSuccessfully upgraded!" secret update sssh!
 #not-enough-money: "&cYou don't have enough money for this upgrade!"

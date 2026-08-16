@@ -58,6 +58,29 @@ public class IslandDeleteMenu implements Listener {
                 return;
             }
 
+            if (islandToDelete.getCenterLocation() != null && islandToDelete.getCenterLocation().getWorld() != null) {
+                org.bukkit.World world = islandToDelete.getCenterLocation().getWorld();
+                int radius = islandToDelete.getIslandSize() / 2;
+                int centerX = islandToDelete.getCenterLocation().getBlockX();
+                int centerZ = islandToDelete.getCenterLocation().getBlockZ();
+
+                for (Player p : world.getPlayers()) {
+                    if (Math.abs(p.getLocation().getBlockX() - centerX) <= radius &&
+                            Math.abs(p.getLocation().getBlockZ() - centerZ) <= radius) {
+                        BorderManager.removeBorder(p);
+                        Island pIsland = islandManager.getIsland(p.getUniqueId());
+                        if (pIsland != null && pIsland.getSpawnLocation() != null) {
+                            p.setFallDistance(0);
+                            p.teleport(pIsland.getSpawnLocation());
+                        } else {
+                            p.setFallDistance(0);
+                            p.teleport(Bukkit.getWorlds().get(0).getSpawnLocation());
+                        }
+                        p.sendMessage(msg.getMessage("island.deleted"));
+                    }
+                }
+            }
+
             Bukkit.getPluginManager().callEvent(new IslandEvents.Delete(player, islandToDelete));
             BorderManager.removeBorder(player);
             islandManager.removeIsland(player.getUniqueId());

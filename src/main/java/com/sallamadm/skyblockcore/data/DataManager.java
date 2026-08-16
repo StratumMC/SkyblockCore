@@ -45,9 +45,9 @@ public class DataManager {
             connection = DriverManager.getConnection(
                     "jdbc:mysql://" + host + ":" + port + "/" + database + "?autoReconnect=true&useSSL=true", username, password
             );
-            plugin.getLogger().severe("MySQL baglandı.");
+            plugin.getLogger().severe("MySQL baglandi.");
         } catch (Exception e) {
-            plugin.getLogger().severe("MySQL baglanamadı " + e.getMessage());
+            plugin.getLogger().severe("MySQL baglanamadi " + e.getMessage());
         }
     }
 
@@ -87,7 +87,8 @@ public class DataManager {
                     "spawn_y DOUBLE, " +
                     "spawn_z DOUBLE, " +
                     "spawn_yaw FLOAT, " +
-                    "spawn_pitch FLOAT)");
+                    "spawn_pitch FLOAT, " +
+                    "banned_players TEXT)");
 
             statement.execute("CREATE TABLE IF NOT EXISTS sb_warps (" +
                     "owner_uuid VARCHAR(36), " +
@@ -101,9 +102,86 @@ public class DataManager {
                     "pitch FLOAT, " +
                     "PRIMARY KEY (owner_uuid, name), " +
                     "FOREIGN KEY (owner_uuid) REFERENCES sb_islands(owner_uuid) ON DELETE CASCADE)");
+
+            statement.execute("CREATE TABLE IF NOT EXISTS sb_accounts (" +
+                    "username VARCHAR(32) PRIMARY KEY, " +
+                    "uuid VARCHAR(36) DEFAULT NULL, " +
+                    "email VARCHAR(255) NOT NULL UNIQUE, " +
+                    "password VARCHAR(255) NOT NULL, " +
+                    "role VARCHAR(32) DEFAULT 'player', " +
+                    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                    "credit INT DEFAULT 0)");
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+
+    public void updateUuid(String username, UUID uuid) {
+        if (connection == null) return;
+        String sql = "UPDATE sb_accounts SET uuid = ? WHERE username = ?";
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                ps.setString(1, uuid.toString());
+                ps.setString(2, username);
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    public boolean isRegistered(String username) {
+        if (connection == null) return false;
+        String sql = "SELECT username FROM sb_accounts WHERE username = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public void registerAccount(UUID uuid, String username, String email, String password) {
+        if (connection == null) return;
+        String hashedPassword = org.mindrot.jbcrypt.BCrypt.hashpw(password, org.mindrot.jbcrypt.BCrypt.gensalt(12));
+        String sql = "INSERT INTO sb_accounts (username, uuid, email, password, role, credit) VALUES (?, ?, ?, ?, 'player', 0)";
+
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                ps.setString(1, username);
+                ps.setString(2, uuid.toString());
+                ps.setString(3, email);
+                ps.setString(4, hashedPassword);
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    public boolean checkPassword(String username, String inputPassword) {
+        if (connection == null) return false;
+        String sql = "SELECT password FROM sb_accounts WHERE username = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    String dbHash = rs.getString("password");
+                    if (dbHash != null && dbHash.startsWith("$2b$")) {
+                        dbHash = dbHash.replace("$2b$", "$2a$");
+                    }
+
+                    return org.mindrot.jbcrypt.BCrypt.checkpw(inputPassword, dbHash);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     public void saveData() {
@@ -162,7 +240,7 @@ public class DataManager {
     }
 
     private void saveIslandSync(Island island) throws SQLException {
-        String sql = "REPLACE INTO sb_islands (owner_uuid, grid_index, island_size, island_level, island_name, is_locked, biome, center_world, center_x, center_y, center_z, spawn_x, spawn_y, spawn_z, spawn_yaw, spawn_pitch) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "REPLACE INTO sb_islands (owner_uuid, grid_index, island_size, island_level, island_name, is_locked, biome, center_world, center_x, center_y, center_z, spawn_x, spawn_y, spawn_z, spawn_yaw, spawn_pitch, banned_players) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, island.getOwnerUUID().toString());
             ps.setInt(2, island.getGridIndex());
@@ -190,6 +268,8 @@ public class DataManager {
             } else {
                 ps.setDouble(12, 0); ps.setDouble(13, 0); ps.setDouble(14, 0); ps.setFloat(15, 0); ps.setFloat(16, 0);
             }
+
+            ps.setString(17, island.getBannedPlayersAsString());
             ps.executeUpdate();
         }
 
@@ -252,6 +332,7 @@ public class DataManager {
                     island.setLevel(rs.getInt("island_level"));
                     island.setIslandName(rs.getString("island_name"));
                     island.setLocked(rs.getBoolean("is_locked"));
+                    island.loadBannedPlayersFromString(rs.getString("banned_players"));
 
                     try {
                         island.setBiome(Biome.valueOf(rs.getString("biome")));

@@ -2,6 +2,7 @@ package com.sallamadm.skyblockcore.listeners;
 
 import com.sallamadm.skyblockcore.SkyblockCore;
 import com.sallamadm.skyblockcore.island.Island;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -27,7 +28,7 @@ public class VoidFallListener implements Listener {
                 player.teleport(island.getSpawnLocation());
             } else {
                 player.setFallDistance(0);
-                player.teleport(player.getWorld().getSpawnLocation());
+                player.teleport(Bukkit.getWorlds().get(0).getSpawnLocation());
             }
         }
     }

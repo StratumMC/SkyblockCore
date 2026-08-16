@@ -172,10 +172,12 @@ public class IsCommand {
                 ))
 
                 // /is help
-                .withSubcommand(createSubCommand("help", "Ada komutları listeler.",
+                .withSubcommand(createSubCommand("help [page]", "Ada komutları listeler.",
                         new CommandAPICommand("help")
+                                .withOptionalArguments(new IntegerArgument("page", 1))
                                 .executesPlayer((player, args) -> {
-                                    sendHelpMenu(player);
+                                    int page = (int) args.getOrDefault("page", 1);
+                                    sendHelpMenu(player, page);
                                 })
                 ))
 
@@ -283,7 +285,7 @@ public class IsCommand {
                 // /is visit
                 .withSubcommand(createSubCommand("visit <target> [warp]", "Başka birinin adasını ziyaret edin.",
                         new CommandAPICommand("visit")
-                                .withArguments(new StringArgument("target")) //replaceSuggestions(onlinePlayerSuggestions)
+                                .withOptionalArguments(new StringArgument("target")) //replaceSuggestions(onlinePlayerSuggestions)
                                 .withOptionalArguments(new StringArgument("warp").replaceSuggestions(warpSuggestions))
                                 .executesPlayer((player, args) -> {
                                     handleWarpTeleportCommand(player, args, plugin);
@@ -293,10 +295,96 @@ public class IsCommand {
                 // /is warp
                 .withSubcommand(createSubCommand("warp <target> [warp]", "Warp'a ışınlanın.",
                         new CommandAPICommand("warp")
-                                .withArguments(new StringArgument("target")) //.replaceSuggestions(onlinePlayerSuggestions)
+                                .withOptionalArguments(new StringArgument("target")) //.replaceSuggestions(onlinePlayerSuggestions)
                                 .withOptionalArguments(new StringArgument("warp").replaceSuggestions(warpSuggestions))
                                 .executesPlayer((player, args) -> {
                                     handleWarpTeleportCommand(player, args, plugin);
+                                })
+                ))
+
+
+                // /is kick <target>
+                .withSubcommand(createSubCommand("kick <target>", "Oyuncuyu adadan atın.",
+                        new CommandAPICommand("kick")
+                                .withArguments(new PlayerArgument("target"))
+                                .executesPlayer((player, args) -> {
+                                    Player target = (Player) args.get("target");
+                                    Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
+
+                                    if (island == null) {
+                                        player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+                                    if (player.equals(target)) {
+                                        player.sendMessage(msg.getMessage("island.cannot-kick-self"));
+                                        return;
+                                    }
+                                    if (target.isOp()) {
+                                        player.sendMessage(msg.getMessage("general.no-permission"));
+                                        return;
+                                    }
+                                    if (!isPlayerOnIsland(target, island)) {
+                                        player.sendMessage(msg.getMessage("island.target-not-on-island"));
+                                        return;
+                                    }
+
+                                    teleportOutFromIsland(plugin, target);
+                                    target.sendMessage(msg.getMessage("island.kicked"));
+                                    player.sendMessage(msg.getMessage("island.kick-success").replace("{target}", target.getName()));
+                                })
+                ))
+
+                // /is ban <target>
+                .withSubcommand(createSubCommand("ban <target>", "Oyunucu adanıza girişini engelleyin.",
+                        new CommandAPICommand("ban")
+                                .withArguments(new PlayerArgument("target"))
+                                .executesPlayer((player, args) -> {
+                                    Player target = (Player) args.get("target");
+                                    Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
+
+                                    if (island == null) {
+                                        player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+                                    if (player.equals(target)) {
+                                        player.sendMessage(msg.getMessage("island.cannot-ban-self"));
+                                        return;
+                                    }
+                                    if (target.isOp()) {
+                                        player.sendMessage(msg.getMessage("general.no-permission"));
+                                        return;
+                                    }
+
+                                    island.banPlayer(target.getUniqueId());
+
+                                    if (isPlayerOnIsland(target, island)) {
+                                        teleportOutFromIsland(plugin, target);
+                                    }
+
+                                    target.sendMessage(msg.getMessage("island.banned"));
+                                    player.sendMessage(msg.getMessage("island.ban-success").replace("{target}", target.getName()));
+                                })
+                ))
+
+                // /is unban <target>
+                .withSubcommand(createSubCommand("unban <target>", "Oyuncunun ada banini kaldirin.",
+                        new CommandAPICommand("unban")
+                                .withArguments(new PlayerArgument("target"))
+                                .executesPlayer((player, args) -> {
+                                    Player target = (Player) args.get("target");
+                                    Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
+
+                                    if (island == null) {
+                                        player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+                                    if (!island.isBanned(target.getUniqueId())) {
+                                        player.sendMessage(msg.getMessage("island.not-banned"));
+                                        return;
+                                    }
+
+                                    island.unbanPlayer(target.getUniqueId());
+                                    player.sendMessage(msg.getMessage("island.unban-success").replace("{target}", target.getName()));
                                 })
                 ))
 
@@ -391,11 +479,26 @@ public class IsCommand {
         }
     }
 
-    private static void sendHelpMenu(Player player) {
-        player.sendMessage(ChatColor.GOLD + "========== [ SKYBLOCK KOMUTLARI ] ==========");
+    private static void sendHelpMenu(Player player, int page) {
+        List<Map.Entry<String, String>> helpList = new ArrayList<>(HELP_MAP.entrySet());
+        int pageSize = 5;
+        int totalPages = (int) Math.ceil((double) helpList.size() / pageSize);
 
-        for (Map.Entry<String, String> entry : HELP_MAP.entrySet()) {
-            player.sendMessage(ChatColor.YELLOW + entry.getKey() + ChatColor.GRAY + " - " + entry.getValue());
+        if (page < 1) page = 1;
+        if (page > totalPages && totalPages > 0) page = totalPages;
+
+        player.sendMessage(ChatColor.GOLD + "========== [ SKYBLOCK KOMUTLARI (Sayfa " + page + "/" + Math.max(totalPages, 1) + ") ] ==========");
+
+        if (helpList.isEmpty()) {
+            player.sendMessage(ChatColor.RED + "Gösterilecek komut bulunamadı.");
+        } else {
+            int startIndex = (page - 1) * pageSize;
+            int endIndex = Math.min(startIndex + pageSize, helpList.size());
+
+            for (int i = startIndex; i < endIndex; i++) {
+                Map.Entry<String, String> entry = helpList.get(i);
+                player.sendMessage(ChatColor.YELLOW + entry.getKey() + ChatColor.GRAY + " - " + entry.getValue());
+            }
         }
 
         player.sendMessage(ChatColor.GOLD + "==========================================");
@@ -488,5 +591,29 @@ public class IsCommand {
         player.sendMessage(msg.getMessage("warp.teleported")
                 .replace("{target}", targetName)
                 .replace("{warp}", warp.getName()));
+    }
+
+    private static boolean isPlayerOnIsland(Player player, Island island) {
+        Location loc = player.getLocation();
+        if (island.getCenterLocation() == null || !loc.getWorld().equals(island.getCenterLocation().getWorld())) {
+            return false;
+        }
+        int radius = island.getIslandSize() / 2;
+        Location center = island.getCenterLocation();
+        return Math.abs(loc.getBlockX() - center.getBlockX()) <= radius &&
+                Math.abs(loc.getBlockZ() - center.getBlockZ()) <= radius;
+    }
+
+    private static void teleportOutFromIsland(SkyblockCore plugin, Player player) {
+        Island playerIsland = plugin.getIslandManager().getIsland(player.getUniqueId());
+        player.setFallDistance(0);
+        BorderManager.removeBorder(player);
+
+        if (playerIsland != null && playerIsland.getSpawnLocation() != null) {
+            player.teleport(playerIsland.getSpawnLocation());
+            BorderManager.applyIslandBorder(player, playerIsland);
+        } else {
+            player.teleport(Bukkit.getWorlds().get(0).getSpawnLocation());
+        }
     }
 }
