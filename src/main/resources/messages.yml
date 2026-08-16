@@ -30,6 +30,9 @@ island:
   unban-success: "&e{target} &aadlı oyuncunun banı kaldırıldı."
   not-banned: "&cBu oyuncu banlı değil!"
   cannot-ban-self: "&cKendini banlayamazsın!"
+  spawn-set: "&aAdanızın ışınlanma (spawn) noktası başarıyla güncellendi!"
+  must-be-on-island: "&cBunu yapabilmek için adanda olmalısın!"
+  outside-boundary: "&cBu komutu yalnızca ada sınırları içinde kullanabilirsin!"
 
 warp:
   created: "&aWarp &e{warp} &aoluşturuldu! Şu anda kullancılardan gizli."

@@ -388,6 +388,34 @@ public class IsCommand {
                                 })
                 ))
 
+                // /is setspawn
+                .withSubcommand(createSubCommand("setspawn", "Adanızın spawn noktasını ayarlayın.",
+                        new CommandAPICommand("setspawn")
+                                .executesPlayer((player, args) -> {
+                                    Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
+                                    if (island == null) {
+                                        player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+
+                                    Location loc = player.getLocation();
+                                    Location center = island.getCenterLocation();
+                                    if (center == null || !loc.getWorld().equals(center.getWorld())) {
+                                        player.sendMessage(msg.getMessage("island.must-be-on-island"));
+                                        return;
+                                    }
+                                    int radius = island.getIslandSize() / 2;
+                                    if (Math.abs(loc.getBlockX() - center.getBlockX()) > radius || Math.abs(loc.getBlockZ() - center.getBlockZ()) > radius) {
+                                        player.sendMessage(msg.getMessage("island.outside-boundary"));
+                                        return;
+                                    }
+                                    island.setSpawnLocation(loc);
+                                    plugin.getDataManager().saveData();
+
+                                    player.sendMessage(msg.getMessage("island.spawn-set"));
+                                })
+                ))
+
                 // ADMIN COMMANDS
 
                 // /is set level <player> <amount>
