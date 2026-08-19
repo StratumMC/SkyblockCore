@@ -2,6 +2,7 @@ package com.sallamadm.skyblockcore.data;
 
 import com.sallamadm.skyblockcore.SkyblockCore;
 import com.sallamadm.skyblockcore.island.Island;
+import com.sallamadm.skyblockcore.island.IslandRole;
 import com.sallamadm.skyblockcore.island.Warp;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -10,9 +11,7 @@ import org.bukkit.World;
 import org.bukkit.block.Biome;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class DataManager {
 
@@ -73,6 +72,7 @@ public class DataManager {
 
             statement.execute("CREATE TABLE IF NOT EXISTS sb_islands (" +
                     "owner_uuid VARCHAR(36) PRIMARY KEY, " +
+                    "island_uuid VARCHAR(36) UNIQUE, " +
                     "grid_index INT NOT NULL, " +
                     "island_size INT NOT NULL, " +
                     "island_level INT NOT NULL, " +
@@ -102,6 +102,21 @@ public class DataManager {
                     "pitch FLOAT, " +
                     "PRIMARY KEY (owner_uuid, name), " +
                     "FOREIGN KEY (owner_uuid) REFERENCES sb_islands(owner_uuid) ON DELETE CASCADE)");
+
+            statement.execute("CREATE TABLE IF NOT EXISTS sb_island_permissions (" +
+                    "island_uuid VARCHAR(36) NOT NULL, " +
+                    "role_tier INT NOT NULL, " +
+                    "permission_node VARCHAR(64) NOT NULL, " +
+                    "PRIMARY KEY (island_uuid, role_tier, permission_node), " +
+                    "FOREIGN KEY (island_uuid) REFERENCES sb_islands(island_uuid) ON DELETE CASCADE)");
+
+            statement.execute("CREATE TABLE IF NOT EXISTS sb_island_members (" +
+                    "island_uuid VARCHAR(36) NOT NULL, " +
+                    "player_uuid VARCHAR(36) NOT NULL, " +
+                    "role_tier INT NOT NULL, " +
+                    "added_by VARCHAR(36) DEFAULT NULL, " +
+                    "PRIMARY KEY (island_uuid, player_uuid), " +
+                    "FOREIGN KEY (island_uuid) REFERENCES sb_islands(island_uuid) ON DELETE CASCADE)");
 
             statement.execute("CREATE TABLE IF NOT EXISTS sb_accounts (" +
                     "username VARCHAR(32) PRIMARY KEY, " +
@@ -240,36 +255,37 @@ public class DataManager {
     }
 
     private void saveIslandSync(Island island) throws SQLException {
-        String sql = "REPLACE INTO sb_islands (owner_uuid, grid_index, island_size, island_level, island_name, is_locked, biome, center_world, center_x, center_y, center_z, spawn_x, spawn_y, spawn_z, spawn_yaw, spawn_pitch, banned_players) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "REPLACE INTO sb_islands (owner_uuid, island_uuid, grid_index, island_size, island_level, island_name, is_locked, biome, center_world, center_x, center_y, center_z, spawn_x, spawn_y, spawn_z, spawn_yaw, spawn_pitch, banned_players) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, island.getOwnerUUID().toString());
-            ps.setInt(2, island.getGridIndex());
-            ps.setInt(3, island.getIslandSize());
-            ps.setInt(4, island.getLevel());
-            ps.setString(5, island.getIslandName());
-            ps.setBoolean(6, island.isLocked());
-            ps.setString(7, island.getBiome() != null ? island.getBiome().name() : Biome.PLAINS.name());
+            ps.setString(2, island.getIslandUuid());
+            ps.setInt(3, island.getGridIndex());
+            ps.setInt(4, island.getIslandSize());
+            ps.setInt(5, island.getLevel());
+            ps.setString(6, island.getIslandName());
+            ps.setBoolean(7, island.isLocked());
+            ps.setString(8, island.getBiome() != null ? island.getBiome().name() : Biome.PLAINS.name());
 
             if (island.getCenterLocation() != null) {
-                ps.setString(8, island.getCenterLocation().getWorld().getName());
-                ps.setDouble(9, island.getCenterLocation().getX());
-                ps.setDouble(10, island.getCenterLocation().getY());
-                ps.setDouble(11, island.getCenterLocation().getZ());
+                ps.setString(9, island.getCenterLocation().getWorld().getName());
+                ps.setDouble(10, island.getCenterLocation().getX());
+                ps.setDouble(11, island.getCenterLocation().getY());
+                ps.setDouble(12, island.getCenterLocation().getZ());
             } else {
-                ps.setString(8, null); ps.setDouble(9, 0); ps.setDouble(10, 0); ps.setDouble(11, 0);
+                ps.setString(9, null); ps.setDouble(10, 0); ps.setDouble(11, 0); ps.setDouble(12, 0);
             }
 
             if (island.getSpawnLocation() != null) {
-                ps.setDouble(12, island.getSpawnLocation().getX());
-                ps.setDouble(13, island.getSpawnLocation().getY());
-                ps.setDouble(14, island.getSpawnLocation().getZ());
-                ps.setFloat(15, island.getSpawnLocation().getYaw());
-                ps.setFloat(16, island.getSpawnLocation().getPitch());
+                ps.setDouble(13, island.getSpawnLocation().getX());
+                ps.setDouble(14, island.getSpawnLocation().getY());
+                ps.setDouble(15, island.getSpawnLocation().getZ());
+                ps.setFloat(16, island.getSpawnLocation().getYaw());
+                ps.setFloat(17, island.getSpawnLocation().getPitch());
             } else {
-                ps.setDouble(12, 0); ps.setDouble(13, 0); ps.setDouble(14, 0); ps.setFloat(15, 0); ps.setFloat(16, 0);
+                ps.setDouble(13, 0); ps.setDouble(14, 0); ps.setDouble(15, 0); ps.setFloat(16, 0); ps.setFloat(17, 0);
             }
 
-            ps.setString(17, island.getBannedPlayersAsString());
+            ps.setString(18, island.getBannedPlayersAsString());
             ps.executeUpdate();
         }
 
@@ -298,6 +314,86 @@ public class DataManager {
                     ps.addBatch();
                 }
                 ps.executeBatch();
+            }
+        }
+    }
+
+    public void setPermissionAsync(String islandUuid, int roleTier, String node, boolean granted) {
+        if (connection == null || islandUuid == null) return;
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            String sql = granted
+                    ? "INSERT IGNORE INTO sb_island_permissions (island_uuid, role_tier, permission_node) VALUES (?, ?, ?)"
+                    : "DELETE FROM sb_island_permissions WHERE island_uuid = ? AND role_tier = ? AND permission_node = ?";
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                ps.setString(1, islandUuid);
+                ps.setInt(2, roleTier);
+                ps.setString(3, node);
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private Map<Integer, Set<String>> loadPermissionsSync(String islandUuid) throws SQLException {
+        Map<Integer, Set<String>> result = new HashMap<>();
+        String sql = "SELECT role_tier, permission_node FROM sb_island_permissions WHERE island_uuid = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, islandUuid);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int tier = rs.getInt("role_tier");
+                    String node = rs.getString("permission_node");
+                    result.computeIfAbsent(tier, k -> new HashSet<>()).add(node);
+                }
+            }
+        }
+        return result;
+    }
+
+    public void saveMemberAsync(String islandUuid, UUID playerUuid, int roleTier, UUID addedBy) {
+        if (connection == null || islandUuid == null) return;
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            String sql = "REPLACE INTO sb_island_members (island_uuid, player_uuid, role_tier, added_by) VALUES (?, ?, ?, ?)";
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                ps.setString(1, islandUuid);
+                ps.setString(2, playerUuid.toString());
+                ps.setInt(3, roleTier);
+                ps.setString(4, addedBy != null ? addedBy.toString() : null);
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    public void removeMemberAsync(String islandUuid, UUID playerUuid) {
+        if (connection == null || islandUuid == null) return;
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            String sql = "DELETE FROM sb_island_members WHERE island_uuid = ? AND player_uuid = ?";
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                ps.setString(1, islandUuid);
+                ps.setString(2, playerUuid.toString());
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private void loadMembersSync(Island island, String islandUuid) throws SQLException {
+        String sql = "SELECT player_uuid, role_tier, added_by FROM sb_island_members WHERE island_uuid = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, islandUuid);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    UUID playerUuid = UUID.fromString(rs.getString("player_uuid"));
+                    int tier = rs.getInt("role_tier");
+                    String addedByStr = rs.getString("added_by");
+                    UUID addedBy = addedByStr != null ? UUID.fromString(addedByStr) : null;
+
+                    island.loadMemberFromDb(playerUuid, tier, addedBy);
+                }
             }
         }
     }
@@ -334,6 +430,11 @@ public class DataManager {
                     island.setLocked(rs.getBoolean("is_locked"));
                     island.loadBannedPlayersFromString(rs.getString("banned_players"));
 
+                    String dbIslandUuid = rs.getString("island_uuid");
+                    if (dbIslandUuid != null && !dbIslandUuid.isEmpty()) {
+                        island.setIslandUuid(dbIslandUuid);
+                    }
+
                     try {
                         island.setBiome(Biome.valueOf(rs.getString("biome")));
                     } catch (Exception ignored) {}
@@ -346,6 +447,9 @@ public class DataManager {
                             island.setSpawnLocation(new Location(world, rs.getDouble("spawn_x"), rs.getDouble("spawn_y"), rs.getDouble("spawn_z"), rs.getFloat("spawn_yaw"), rs.getFloat("spawn_pitch")));
                         }
                     }
+
+                    island.setPermissionCache(loadPermissionsSync(island.getIslandUuid()));
+                    loadMembersSync(island, island.getIslandUuid());
                 }
             }
 
