@@ -405,7 +405,7 @@ public class WarpMenu implements Listener {
                     openOwnerWarpMenu(player, currentPage - 1);
                 } else if (slot == 49 && event.getCurrentItem().getType() == Material.PAPER) {
                     player.closeInventory();
-                    player.performCommand("is"); // Ana menü komutu
+                    player.performCommand("is");
                 } else if (slot == 50 && event.getCurrentItem().getType() == Material.PAPER) {
                     openOwnerWarpMenu(player, currentPage + 1);
                 }

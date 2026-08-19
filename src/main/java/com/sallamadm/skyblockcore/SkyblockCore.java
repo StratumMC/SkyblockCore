@@ -5,10 +5,7 @@ import com.sallamadm.skyblockcore.commands.LoginCommand;
 import com.sallamadm.skyblockcore.commands.RegisterCommand;
 import com.sallamadm.skyblockcore.config.MessageManager;
 import com.sallamadm.skyblockcore.data.DataManager;
-import com.sallamadm.skyblockcore.gui.BiomeMenu;
-import com.sallamadm.skyblockcore.gui.IsMenu;
-import com.sallamadm.skyblockcore.gui.IslandDeleteMenu;
-import com.sallamadm.skyblockcore.gui.WarpMenu;
+import com.sallamadm.skyblockcore.gui.*;
 import com.sallamadm.skyblockcore.island.IslandManager;
 import com.sallamadm.skyblockcore.listeners.*;
 import com.sallamadm.skyblockcore.scoreboard.ScoreboardManager;
@@ -60,17 +57,21 @@ public final class SkyblockCore extends JavaPlugin {
         LoginCommand.registerCommand(this);
 
 
-        getServer().getPluginManager().registerEvents(new BiomeMenu(), this);
         getServer().getPluginManager().registerEvents(new JoinListener(this), this);
         getServer().getPluginManager().registerEvents(new VoidFallListener(this), this);
         getServer().getPluginManager().registerEvents(new IslandTeleportListener(this), this);
         getServer().getPluginManager().registerEvents(new IslandProtectionListener(this), this);
         getServer().getPluginManager().registerEvents(new AuthListener(this), this);
+        getServer().getPluginManager().registerEvents(new QuitListener(this), this);
 
         //guis
+        getServer().getPluginManager().registerEvents(new BiomeMenu(), this);
         getServer().getPluginManager().registerEvents(new WarpMenu(), this);
         getServer().getPluginManager().registerEvents(new IsMenu(), this);
         getServer().getPluginManager().registerEvents(new IslandDeleteMenu(), this);
+        getServer().getPluginManager().registerEvents(new IsMenu(), this);
+        getServer().getPluginManager().registerEvents(new MembersMenu(), this);
+        getServer().getPluginManager().registerEvents(new PermissionsMenu(), this);
 
         getLogger().info("Skyblock Core is now activated.");
     }

@@ -2,7 +2,6 @@ package com.sallamadm.skyblockcore.data;
 
 import com.sallamadm.skyblockcore.SkyblockCore;
 import com.sallamadm.skyblockcore.island.Island;
-import com.sallamadm.skyblockcore.island.IslandRole;
 import com.sallamadm.skyblockcore.island.Warp;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;

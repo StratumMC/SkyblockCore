@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class Island {
-    private final UUID ownerUUID;
+    private UUID ownerUUID;
     private String islandUuid;
     private int level;
     private int gridIndex;
@@ -25,6 +25,7 @@ public class Island {
     private final Map<Integer, Set<String>> permissionCache = new HashMap<>();
     private final Map<UUID, Integer> memberRoles = new HashMap<>();
     private final Map<UUID, UUID> coopAddedBy = new HashMap<>();
+    private final Map<UUID, UUID> pendingInvites = new HashMap<>();
 
     public Island(UUID ownerUUID) {
         this.ownerUUID = ownerUUID;
@@ -49,6 +50,11 @@ public class Island {
 
     public UUID getOwnerUUID() {
         return ownerUUID;
+    }
+
+    public void setOwnerUUID(UUID ownerUUID) {
+        this.ownerUUID = ownerUUID;
+        autoSave();
     }
 
     public String getIslandUuid() {
@@ -219,8 +225,38 @@ public class Island {
     public Map<UUID, Integer> getMemberRoles() {
         return memberRoles;
     }
+    public boolean hasIsland(UUID playerUuid) {
+        if (playerUuid.equals(ownerUUID)) {
+            return true;
+        }
+        Integer roleTier = memberRoles.get(playerUuid);
+        return roleTier != null && roleTier < IslandRole.VISITOR.getTier();
+    }
+
     public Map<UUID, UUID> getCoopAddedBy() {
         return coopAddedBy;
+    }
+
+    public Map<UUID, UUID> getPendingInvites() {
+        return pendingInvites;
+    }
+
+    public void addPendingInvite(UUID invitee, UUID inviter) {
+        pendingInvites.put(invitee, inviter);
+        autoSave();
+    }
+
+    public void removePendingInvite(UUID invitee) {
+        pendingInvites.remove(invitee);
+        autoSave();
+    }
+
+    public boolean hasPendingInvite(UUID invitee) {
+        return pendingInvites.containsKey(invitee);
+    }
+
+    public UUID getInviter(UUID invitee) {
+        return pendingInvites.get(invitee);
     }
     public void addOrUpdateMember(UUID playerUuid, IslandRole role, UUID addedBy) {
         memberRoles.put(playerUuid, role.getTier());

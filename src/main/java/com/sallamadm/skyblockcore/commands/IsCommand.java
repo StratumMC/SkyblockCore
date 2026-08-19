@@ -4,12 +4,11 @@ import com.sallamadm.skyblockcore.SkyblockCore;
 import com.sallamadm.skyblockcore.border.BorderManager;
 import com.sallamadm.skyblockcore.config.MessageManager;
 import com.sallamadm.skyblockcore.events.IslandEvents;
-import com.sallamadm.skyblockcore.gui.IslandDeleteMenu;
+import com.sallamadm.skyblockcore.gui.*;
 import com.sallamadm.skyblockcore.island.Island;
 import com.sallamadm.skyblockcore.island.Warp;
-import com.sallamadm.skyblockcore.gui.IsMenu;
-import com.sallamadm.skyblockcore.gui.BiomeMenu;
-import com.sallamadm.skyblockcore.gui.WarpMenu;
+import com.sallamadm.skyblockcore.island.enums.IslandPermissions;
+import com.sallamadm.skyblockcore.island.enums.IslandRole;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.CommandPermission;
 import dev.jorel.commandapi.arguments.ArgumentSuggestions;
@@ -482,6 +481,218 @@ public class IsCommand {
                                                 })
                                 )
                 ))
+
+
+                // /is permissions
+                .withSubcommand(createSubCommand("permissions", "İzin menüsünü aç.",
+                        new CommandAPICommand("permissions")
+                                .executesPlayer((player, args) -> {
+                                    Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
+                                    if (island == null) {
+                                        player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+                                    if (!player.getUniqueId().equals(island.getOwnerUUID())) {
+                                        player.sendMessage(msg.getMessage("general.no-permission"));
+                                        return;
+                                    }
+                                    PermissionsMenu.openPermissionsMenu(player);
+                                })
+                ))
+
+                // /is members
+                .withSubcommand(createSubCommand("members", "Ada üyelerini yönet.",
+                        new CommandAPICommand("members")
+                                .executesPlayer((player, args) -> {
+                                    Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
+                                    if (island == null) {
+                                        player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+                                    if (!island.hasPermission(player.getUniqueId(), IslandPermissions.MEMBERS_ROLE_CHANGE.getNode())) {
+                                        player.sendMessage(msg.getMessage("general.no-permission"));
+                                        return;
+                                    }
+                                    MembersMenu.openMembersMenu(player);
+                                })
+                ))
+
+                // /is makeleader <player>
+                .withSubcommand(createSubCommand("makeleader <player>", "[Owner] Ada liderliğini başka bir oyuncuya transfer et.",
+                        new CommandAPICommand("makeleader")
+                                .withArguments(new PlayerArgument("target"))
+                                .executesPlayer((player, args) -> {
+                                    Player target = (Player) args.get("target");
+                                    Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
+                                    if (island == null) {
+                                        player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+                                    if (!player.getUniqueId().equals(island.getOwnerUUID())) {
+                                        player.sendMessage(msg.getMessage("general.no-permission"));
+                                        return;
+                                    }
+                                    if (player.getUniqueId().equals(target.getUniqueId())) {
+                                        player.sendMessage(msg.getMessage("island.cannot-transfer-self"));
+                                        return;
+                                    }
+                                    if (!island.hasIsland(target.getUniqueId())) {
+                                        player.sendMessage(msg.getMessage("island.target-not-member"));
+                                        return;
+                                    }
+                                    UUID oldOwnerUUID = player.getUniqueId();
+                                    UUID newOwnerUUID = target.getUniqueId();
+
+                                    island.removeMember(oldOwnerUUID);
+                                    island.addOrUpdateMember(oldOwnerUUID, IslandRole.COOP, newOwnerUUID);
+
+                                    island.setOwnerUUID(newOwnerUUID);
+                                    island.removeMember(newOwnerUUID);
+
+                                    island.setIslandUuid(UUID.randomUUID().toString());
+
+                                    plugin.getDataManager().saveIslandAsync(island);
+
+                                    player.sendMessage(msg.getMessage("island.leadership-transferred")
+                                            .replace("{target}", target.getName()));
+                                    target.sendMessage(msg.getMessage("island.leadership-received")
+                                            .replace("{target}", player.getName()));
+                                })
+                ))
+
+                // /is coop <player>
+                .withSubcommand(createSubCommand("coop <player>", "[Mod ve üzeri] Coop oyuncu ekle.",
+                        new CommandAPICommand("coop")
+                                .withArguments(new PlayerArgument("target"))
+                                .executesPlayer((player, args) -> {
+                                    Player target = (Player) args.get("target");
+                                    Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
+                                    if (island == null) {
+                                        player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+                                    int playerRoleTier = island.getRoleTier(player.getUniqueId());
+                                    if (playerRoleTier > IslandRole.MOD.getTier()) {
+                                        player.sendMessage(msg.getMessage("general.no-permission"));
+                                        return;
+                                    }
+                                    if (!island.hasIsland(target.getUniqueId())) {
+                                        player.sendMessage(msg.getMessage("island.target-not-on-island"));
+                                        return;
+                                    }
+                                    if (island.getRoleTier(target.getUniqueId()) == IslandRole.COOP.getTier()) {
+                                        player.sendMessage(msg.getMessage("island.already-coop"));
+                                        return;
+                                    }
+                                    if (player.getUniqueId().equals(target.getUniqueId())) {
+                                        player.sendMessage(msg.getMessage("island.cannot-coop-self"));
+                                        return;
+                                    }
+
+                                    island.addOrUpdateMember(target.getUniqueId(), IslandRole.COOP, player.getUniqueId());
+                                    plugin.getDataManager().saveIslandAsync(island);
+
+                                    player.sendMessage(msg.getMessage("island.coop-added")
+                                            .replace("{target}", target.getName()));
+                                    target.sendMessage(msg.getMessage("island.coop-received")
+                                            .replace("{target}", player.getName()));
+                                })
+                ))
+
+                // /is invite <player>
+                .withSubcommand(createSubCommand("invite <player>", "Oyuncuyu adaya davet et.",
+                        new CommandAPICommand("invite")
+                                .withArguments(new PlayerArgument("target"))
+                                .executesPlayer((player, args) -> {
+                                    Player target = (Player) args.get("target");
+                                    Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
+                                    if (island == null) {
+                                        player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+                                    if (!island.hasPermission(player.getUniqueId(), IslandPermissions.MEMBERS_INVITE.getNode())) {
+                                        player.sendMessage(msg.getMessage("general.no-permission"));
+                                        return;
+                                    }
+                                    if (player.getUniqueId().equals(target.getUniqueId())) {
+                                        player.sendMessage(msg.getMessage("island.cannot-invite-self"));
+                                        return;
+                                    }
+                                    if (island.hasIsland(target.getUniqueId())) {
+                                        player.sendMessage(msg.getMessage("island.already-member"));
+                                        return;
+                                    }
+                                    if (island.hasPendingInvite(target.getUniqueId())) {
+                                        player.sendMessage(msg.getMessage("island.already-invited")
+                                                .replace("{target}", target.getName()));
+                                        return;
+                                    }
+
+                                    island.addPendingInvite(target.getUniqueId(), player.getUniqueId());
+                                    plugin.getDataManager().saveIslandAsync(island);
+
+                                    player.sendMessage(msg.getMessage("island.invite-sent")
+                                            .replace("{target}", target.getName()));
+                                    target.sendMessage(msg.getMessage("island.invite-received")
+                                            .replace("{inviter}", player.getName()));
+                                })
+                        ))
+
+                // /is confirm
+                .withSubcommand(createSubCommand("confirm", "Daveti kabul et.",
+                        new CommandAPICommand("confirm")
+                                .executesPlayer((player, args) -> {
+                                    Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
+                                    if (island == null) {
+                                        player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+                                    if (!island.hasPendingInvite(player.getUniqueId())) {
+                                        player.sendMessage(msg.getMessage("island.no-invite"));
+                                        return;
+                                    }
+
+                                    UUID inviterUUID = island.getInviter(player.getUniqueId());
+                                    island.removePendingInvite(player.getUniqueId());
+                                    island.addOrUpdateMember(player.getUniqueId(), IslandRole.MEMBER, inviterUUID);
+                                    plugin.getDataManager().saveIslandAsync(island);
+
+                                    Player inviter = plugin.getServer().getPlayer(inviterUUID);
+                                    if (inviter != null && inviter.isOnline()) {
+                                        inviter.sendMessage(msg.getMessage("island.invite-confirmed")
+                                                .replace("{target}", player.getName()));
+                                    }
+                                    player.sendMessage(msg.getMessage("island.joined-island")
+                                            .replace("{inviter}", plugin.getServer().getPlayer(inviterUUID).getName()));
+                                })
+                        ))
+
+                // /is reject
+                .withSubcommand(createSubCommand("reject", "Daveti reddet.",
+                        new CommandAPICommand("reject")
+                                .executesPlayer((player, args) -> {
+                                    Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
+                                    if (island == null) {
+                                        player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+                                    if (!island.hasPendingInvite(player.getUniqueId())) {
+                                        player.sendMessage(msg.getMessage("island.no-invite"));
+                                        return;
+                                    }
+
+                                    UUID inviterUUID = island.getInviter(player.getUniqueId());
+                                    island.removePendingInvite(player.getUniqueId());
+                                    plugin.getDataManager().saveIslandAsync(island);
+
+                                    Player inviter = plugin.getServer().getPlayer(inviterUUID);
+                                    if (inviter != null && inviter.isOnline()) {
+                                        inviter.sendMessage(msg.getMessage("island.invite-rejected")
+                                                .replace("{target}", player.getName()));
+                                    }
+                                    player.sendMessage(msg.getMessage("island.invite-rejected-self"));
+                                })
+                        ))
 
                 // /is
                 .executesPlayer((player, args) -> {
