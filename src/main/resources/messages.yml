@@ -8,7 +8,7 @@ general:
 
 island:
   no-island: "&cMevcut bir adaya sahip değilsiniz. /is create ile oluşturun."
-  already-has-island: "&cZaten bir adaya sahipsin."
+  already-has-island: "&c{target} adlı oyuncu zaten bir adaya sahip!"
   created: "&aAda oluşturuldu."
   deleted: "&eAda silindi."
   teleported: "&aAdana ışınlandın."
@@ -52,7 +52,6 @@ island:
   already-invited: "&cBu oyuncu zaten davet edildi."
   cannot-invite-self: "&cKendinizi davet edemezsiniz."
   already-member: "&cBu oyuncu zaten adanızın üyesi."
-  joined-island: "&a{inviter} adlı oyuncunun adasına katıldınız."
   invite-rejected-self: "&cDaveti reddettiniz."
 
 warp:

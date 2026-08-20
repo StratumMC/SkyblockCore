@@ -1,7 +1,6 @@
 package com.sallamadm.skyblockcore.island;
 
 import com.sallamadm.skyblockcore.SkyblockCore;
-import com.sallamadm.skyblockcore.island.enums.IslandRole;
 import org.bukkit.Location;
 import org.bukkit.block.Biome;
 
@@ -22,10 +21,6 @@ public class Island {
     private final Map<String, Warp> warps = new HashMap<>();
     private final Set<UUID> bannedPlayers = new HashSet<>();
 
-    private final Map<Integer, Set<String>> permissionCache = new HashMap<>();
-    private final Map<UUID, Integer> memberRoles = new HashMap<>();
-    private final Map<UUID, UUID> coopAddedBy = new HashMap<>();
-    private final Map<UUID, UUID> pendingInvites = new HashMap<>();
 
     public Island(UUID ownerUUID) {
         this.ownerUUID = ownerUUID;
@@ -183,99 +178,4 @@ public class Island {
         }
     }
 
-    public int getRoleTier(UUID playerUuid) {
-        if (playerUuid.equals(ownerUUID)) return IslandRole.OWNER.getTier();
-        return memberRoles.getOrDefault(playerUuid, IslandRole.VISITOR.getTier());
-    }
-
-    public IslandRole getRole(UUID playerUuid) {
-        return IslandRole.fromTier(getRoleTier(playerUuid));
-    }
-
-    public boolean hasPermission(int roleTier, String permissionNode) {
-        if (roleTier == IslandRole.OWNER.getTier()) return true;
-        Set<String> nodes = permissionCache.get(roleTier);
-        return nodes != null && nodes.contains(permissionNode);
-    }
-
-    public boolean hasPermission(UUID playerUuid, String permissionNode) {
-        return hasPermission(getRoleTier(playerUuid), permissionNode);
-    }
-
-    public void grantPermission(int roleTier, String node) {
-        permissionCache.computeIfAbsent(roleTier, k -> new HashSet<>()).add(node);
-        SkyblockCore.getInstance().getDataManager().setPermissionAsync(islandUuid, roleTier, node, true);
-    }
-
-    public void revokePermission(int roleTier, String node) {
-        Set<String> set = permissionCache.get(roleTier);
-        if (set != null) set.remove(node);
-        SkyblockCore.getInstance().getDataManager().setPermissionAsync(islandUuid, roleTier, node, false);
-    }
-
-    public Set<String> getPermissionsForTier(int roleTier) {
-        return permissionCache.getOrDefault(roleTier, Collections.emptySet());
-    }
-
-    public void setPermissionCache(Map<Integer, Set<String>> cache) {
-        this.permissionCache.clear();
-        this.permissionCache.putAll(cache);
-    }
-
-    public Map<UUID, Integer> getMemberRoles() {
-        return memberRoles;
-    }
-    public boolean hasIsland(UUID playerUuid) {
-        if (playerUuid.equals(ownerUUID)) {
-            return true;
-        }
-        Integer roleTier = memberRoles.get(playerUuid);
-        return roleTier != null && roleTier < IslandRole.VISITOR.getTier();
-    }
-
-    public Map<UUID, UUID> getCoopAddedBy() {
-        return coopAddedBy;
-    }
-
-    public Map<UUID, UUID> getPendingInvites() {
-        return pendingInvites;
-    }
-
-    public void addPendingInvite(UUID invitee, UUID inviter) {
-        pendingInvites.put(invitee, inviter);
-        autoSave();
-    }
-
-    public void removePendingInvite(UUID invitee) {
-        pendingInvites.remove(invitee);
-        autoSave();
-    }
-
-    public boolean hasPendingInvite(UUID invitee) {
-        return pendingInvites.containsKey(invitee);
-    }
-
-    public UUID getInviter(UUID invitee) {
-        return pendingInvites.get(invitee);
-    }
-    public void addOrUpdateMember(UUID playerUuid, IslandRole role, UUID addedBy) {
-        memberRoles.put(playerUuid, role.getTier());
-        if (role == IslandRole.COOP && addedBy != null) {
-            coopAddedBy.put(playerUuid, addedBy);
-        } else {
-            coopAddedBy.remove(playerUuid);
-        }
-        SkyblockCore.getInstance().getDataManager().saveMemberAsync(islandUuid, playerUuid, role.getTier(), addedBy);
-    }
-    public void removeMember(UUID playerUuid) {
-        memberRoles.remove(playerUuid);
-        coopAddedBy.remove(playerUuid);
-        SkyblockCore.getInstance().getDataManager().removeMemberAsync(islandUuid, playerUuid);
-    }
-    public void loadMemberFromDb(UUID playerUuid, int roleTier, UUID addedBy) {
-        memberRoles.put(playerUuid, roleTier);
-        if (roleTier == IslandRole.COOP.getTier() && addedBy != null) {
-            coopAddedBy.put(playerUuid, addedBy);
-        }
-    }
 }

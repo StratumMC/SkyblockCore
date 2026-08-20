@@ -391,7 +391,6 @@ public class DataManager {
                     String addedByStr = rs.getString("added_by");
                     UUID addedBy = addedByStr != null ? UUID.fromString(addedByStr) : null;
 
-                    island.loadMemberFromDb(playerUuid, tier, addedBy);
                 }
             }
         }
@@ -447,7 +446,6 @@ public class DataManager {
                         }
                     }
 
-                    island.setPermissionCache(loadPermissionsSync(island.getIslandUuid()));
                     loadMembersSync(island, island.getIslandUuid());
                 }
             }
