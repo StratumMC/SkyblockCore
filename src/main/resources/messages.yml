@@ -79,6 +79,26 @@ menu:
 permissions:
   cannot-grant-unowned: "&cKendinde olmayan bir yetkiyi başkasına veremezsin!"
   updated: "&e{role}&a rolünün &e{permission}&a yetkisi &e{status}&a olarak ayarlandı."
+
+members:
+  owner-cannot-change: "&cAda sahibinin rolü değiştirilemez!"
+  cannot-edit-coop: "&cBu rol buradan değiştirilemez, /is coop komutunu kullanın!"
+  role-changed: "&e{target}&a adlı oyuncunun rolü &e{role}&a olarak değiştirildi."
+  role-changed-notify: "&aRolün &e{role}&a olarak değiştirildi."
+
+invite:
+  cannot-invite-self: "&cKendini davet edemezsin!"
+  target-has-island: "&c{target} adlı oyuncunun zaten bir adası var!"
+  already-pending: "&e{target} adlı oyuncunun zaten bekleyen bir daveti var!"
+  sent: "&a{target} adlı oyuncuya davet gönderildi! (60 saniye geçerli)"
+  received: "&e{inviter} &aseni &e{island} &aadasına davet etti! Kabul etmek için &e/is confirm&a, reddetmek için &e/is reject &ayaz. (60 saniye)"
+  expired: "&c{inviter} adlı oyuncunun daveti süresi doldu."
+  no-pending: "&cBekleyen bir ada davetin yok!"
+  auto-rejected-has-island: "&cBu süre içinde kendi adanı oluşturduğun için davet otomatik olarak reddedildi."
+  accepted: "&a{island} &aadasına katıldın!"
+  accepted-notify-inviter: "&e{target} &adavetini kabul etti ve adana katıldı!"
+  rejected: "&eDaveti reddettin."
+  rejected-notify-inviter: "&e{target} &adavetini reddetti."
 #upgrades:
 # success: "&aSuccessfully upgraded!" secret update sssh!
 #not-enough-money: "&cYou don't have enough money for this upgrade!"

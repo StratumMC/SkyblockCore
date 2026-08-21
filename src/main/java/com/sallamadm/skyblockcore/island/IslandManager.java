@@ -126,6 +126,16 @@ public class IslandManager {
         return islands;
     }
 
+    public Island getIslandByMember(UUID uuid) {
+        if (islands.containsKey(uuid)) return islands.get(uuid);
+        for (Island island : islands.values()) {
+            if (island.getMemberRoles().containsKey(uuid)) {
+                return island;
+            }
+        }
+        return null;
+    }
+
     public int getNextGridIndex() {
         return nextGridIndex;
     }

@@ -5,10 +5,8 @@ import com.sallamadm.skyblockcore.commands.LoginCommand;
 import com.sallamadm.skyblockcore.commands.RegisterCommand;
 import com.sallamadm.skyblockcore.config.MessageManager;
 import com.sallamadm.skyblockcore.data.DataManager;
-import com.sallamadm.skyblockcore.gui.BiomeMenu;
-import com.sallamadm.skyblockcore.gui.IsMenu;
-import com.sallamadm.skyblockcore.gui.IslandDeleteMenu;
-import com.sallamadm.skyblockcore.gui.WarpMenu;
+import com.sallamadm.skyblockcore.gui.*;
+import com.sallamadm.skyblockcore.island.InviteManager;
 import com.sallamadm.skyblockcore.island.IslandManager;
 import com.sallamadm.skyblockcore.listeners.*;
 import com.sallamadm.skyblockcore.scoreboard.ScoreboardManager;
@@ -25,6 +23,7 @@ public final class SkyblockCore extends JavaPlugin {
     private DataManager dataManager;
     private WorldManager worldManager;
     private MessageManager messageManager;
+    private InviteManager inviteManager;
 
 
     @Override
@@ -50,6 +49,7 @@ public final class SkyblockCore extends JavaPlugin {
         this.islandManager = new IslandManager();
         this.scoreboardManager = new ScoreboardManager(this);
         this.worldManager = new WorldManager(this);
+        this.inviteManager = new InviteManager();
         CommandAPI.onEnable();
 
         this.dataManager = new DataManager(this);
@@ -71,6 +71,8 @@ public final class SkyblockCore extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new BiomeMenu(), this);
         getServer().getPluginManager().registerEvents(new IsMenu(), this);
         getServer().getPluginManager().registerEvents(new IslandDeleteMenu(), this);
+        getServer().getPluginManager().registerEvents(new PermissionsMenu(), this);
+        getServer().getPluginManager().registerEvents(new MembersMenu(), this);
 
         getLogger().info("Skyblock Core is now activated.");
     }
@@ -110,4 +112,8 @@ public final class SkyblockCore extends JavaPlugin {
     public MessageManager getMessageManager() {
         return messageManager;
     }
+    public InviteManager getInviteManager() {
+        return inviteManager;
+    }
+
 }

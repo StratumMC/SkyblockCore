@@ -5,8 +5,11 @@ import com.sallamadm.skyblockcore.border.BorderManager;
 import com.sallamadm.skyblockcore.config.MessageManager;
 import com.sallamadm.skyblockcore.events.IslandEvents;
 import com.sallamadm.skyblockcore.gui.*;
+import com.sallamadm.skyblockcore.island.InviteManager;
 import com.sallamadm.skyblockcore.island.Island;
 import com.sallamadm.skyblockcore.island.Warp;
+import com.sallamadm.skyblockcore.island.enums.IslandPermissions;
+import com.sallamadm.skyblockcore.island.enums.IslandRole;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.CommandPermission;
 import dev.jorel.commandapi.arguments.ArgumentSuggestions;
@@ -424,6 +427,126 @@ public class IsCommand {
                                         return;
                                     }
                                     PermissionsMenu.openRoleSelectMenu(player, island);
+                                })
+                ))
+
+                // /is invite <target>
+                .withSubcommand(createSubCommand("invite <target>", "Adanıza oyuncu davet edin.",
+                        new CommandAPICommand("invite")
+                                .withArguments(new PlayerArgument("target"))
+                                .executesPlayer((player, args) -> {
+                                    Player target = (Player) args.get("target");
+
+                                    if (target.getUniqueId().equals(player.getUniqueId())) {
+                                        player.sendMessage(msg.getMessage("invite.cannot-invite-self"));
+                                        return;
+                                    }
+
+                                    Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
+                                    if (island == null) {
+                                        player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+
+                                    if (!island.hasPermission(player.getUniqueId(), IslandPermissions.INVITE.getNode())) {
+                                        player.sendMessage(msg.getMessage("general.no-permission"));
+                                        return;
+                                    }
+
+                                    if (plugin.getIslandManager().getIslandByMember(target.getUniqueId()) != null) {
+                                        player.sendMessage(msg.getMessage("invite.target-has-island").replace("{target}", target.getName()));
+                                        return;
+                                    }
+
+                                    if (plugin.getInviteManager().hasPendingInvite(target.getUniqueId())) {
+                                        player.sendMessage(msg.getMessage("invite.already-pending").replace("{target}", target.getName()));
+                                        return;
+                                    }
+
+                                    plugin.getInviteManager().createInvite(player, target, island);
+
+                                    player.sendMessage(msg.getMessage("invite.sent").replace("{target}", target.getName()));
+                                    target.sendMessage(msg.getMessage("invite.received")
+                                            .replace("{inviter}", player.getName())
+                                            .replace("{island}", island.getIslandName()));
+                                })
+                ))
+
+                // /is confirm
+                .withSubcommand(createSubCommand("confirm", "Bekleyen ada davetini kabul edin.",
+                        new CommandAPICommand("confirm")
+                                .executesPlayer((player, args) -> {
+                                    InviteManager inviteManager = plugin.getInviteManager();
+                                    InviteManager.PendingInvite invite = inviteManager.getPendingInvite(player.getUniqueId());
+
+                                    if (invite == null) {
+                                        player.sendMessage(msg.getMessage("invite.no-pending"));
+                                        return;
+                                    }
+
+                                    if (plugin.getIslandManager().hasIsland(player.getUniqueId())) {
+                                        inviteManager.removeInvite(player.getUniqueId());
+                                        player.sendMessage(msg.getMessage("invite.auto-rejected-has-island"));
+                                        return;
+                                    }
+
+                                    Island island = plugin.getIslandManager().getIsland(invite.islandOwnerUUID);
+                                    inviteManager.removeInvite(player.getUniqueId());
+
+                                    if (island == null || island.getSpawnLocation() == null) {
+                                        player.sendMessage(msg.getMessage("general.island-not-found"));
+                                        return;
+                                    }
+
+                                    island.addOrUpdateMember(player.getUniqueId(), IslandRole.MEMBER, null);
+
+                                    player.setFallDistance(0);
+                                    player.teleport(island.getSpawnLocation());
+                                    BorderManager.applyIslandBorder(player, island);
+
+                                    player.sendMessage(msg.getMessage("invite.accepted").replace("{island}", island.getIslandName()));
+
+                                    Player inviterPlayer = Bukkit.getPlayer(invite.inviterUUID);
+                                    if (inviterPlayer != null && inviterPlayer.isOnline()) {
+                                        inviterPlayer.sendMessage(msg.getMessage("invite.accepted-notify-inviter")
+                                                .replace("{target}", player.getName()));
+                                    }
+                                })
+                ))
+
+                // /is reject
+                .withSubcommand(createSubCommand("reject", "Bekleyen ada davetini reddedin.",
+                        new CommandAPICommand("reject")
+                                .executesPlayer((player, args) -> {
+                                    InviteManager inviteManager = plugin.getInviteManager();
+                                    InviteManager.PendingInvite invite = inviteManager.getPendingInvite(player.getUniqueId());
+
+                                    if (invite == null) {
+                                        player.sendMessage(msg.getMessage("invite.no-pending"));
+                                        return;
+                                    }
+
+                                    inviteManager.removeInvite(player.getUniqueId());
+                                    player.sendMessage(msg.getMessage("invite.rejected"));
+
+                                    Player inviterPlayer = Bukkit.getPlayer(invite.inviterUUID);
+                                    if (inviterPlayer != null && inviterPlayer.isOnline()) {
+                                        inviterPlayer.sendMessage(msg.getMessage("invite.rejected-notify-inviter")
+                                                .replace("{target}", player.getName()));
+                                    }
+                                })
+                ))
+
+                // /is members
+                .withSubcommand(createSubCommand("members", "Ada üyelerini görüntüleyin ve rollerini düzenleyin.",
+                        new CommandAPICommand("members")
+                                .executesPlayer((player, args) -> {
+                                    Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
+                                    if (island == null) {
+                                        player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+                                    MembersMenu.openMembersMenu(player, island);
                                 })
                 ))
 
