@@ -1,0 +1,41 @@
+package com.sallamadm.skyblockcore.island.enums;
+
+import org.bukkit.Material;
+
+public enum IslandPermissions {
+
+    KICK("island.kick", "Oyuncu Atma", Material.BARRIER),
+    BAN("island.ban", "Oyuncu Banlama", Material.REDSTONE_BLOCK),
+    UNBAN("island.unban", "Ban Kaldırma", Material.REDSTONE),
+    MANAGE_WARP("island.managewarp", "Warp Yönetimi", Material.ENDER_PEARL),
+    BLOCK_BREAK("island.blockbreak", "Blok Kırma", Material.IRON_PICKAXE),
+    BLOCK_PLACE("island.blockplace", "Blok Koyma", Material.DIRT),
+    CONTAINER_ACCESS("island.container", "Sandık Kullanımı", Material.CHEST),
+    INTERACT("island.interact", "Eşya Etkileşimi", Material.STICK),
+    SET_SPAWN("island.setspawn", "Spawn Ayarlama", Material.RED_BED),
+    SET_BIOME("island.setbiome", "Biyom Değiştirme", Material.GRASS_BLOCK),
+    LOCK_ISLAND("island.lock", "Ada Kilitleme", Material.TRIPWIRE_HOOK),
+    INVITE("island.invite", "Davet Etme", Material.PAPER),
+    MANAGE_ROLES("island.manageroles", "Rol Yönetimi", Material.NAME_TAG);
+
+    private final String node;
+    private final String displayName;
+    private final Material icon;
+
+    IslandPermissions(String node, String displayName, Material icon) {
+        this.node = node;
+        this.displayName = displayName;
+        this.icon = icon;
+    }
+
+    public String getNode() { return node; }
+    public String getDisplayName() { return displayName; }
+    public Material getIcon() { return icon; }
+
+    public static IslandPermissions fromNode(String node) {
+        for (IslandPermissions perm : values()) {
+            if (perm.node.equalsIgnoreCase(node)) return perm;
+        }
+        return null;
+    }
+}

@@ -3,6 +3,7 @@ package com.sallamadm.skyblockcore.gui;
 import com.sallamadm.skyblockcore.SkyblockCore;
 import com.sallamadm.skyblockcore.border.BorderManager;
 import com.sallamadm.skyblockcore.config.MessageManager;
+import com.sallamadm.skyblockcore.gui.util.GuiUtils;
 import com.sallamadm.skyblockcore.island.Island;
 import com.sallamadm.skyblockcore.island.Warp;
 import org.bukkit.Bukkit;
@@ -32,53 +33,15 @@ public class WarpMenu implements Listener {
     private static final String OWNER_MENU_TITLE = ChatColor.DARK_PURPLE + "Adanızdaki warplar: ";
     private static final String MANAGE_MENU_PREFIX = ChatColor.DARK_BLUE + "Warp düzenle: ";
 
+    private static final int WARPS_PER_PAGE = 45;
+
     private static final Map<UUID, String> PENDING_RENAME_WARPS = new HashMap<>();
     private static final Map<UUID, BlockData> ORIGINAL_BLOCK_DATA = new HashMap<>();
+    private static final Map<UUID, Integer> CURRENT_PAGE = new HashMap<>();
 
-    public static void openSelfTeleportWarpMenu(Player player) { openSelfTeleportWarpMenu(player, 1); }
-    public static void openVisitorWarpMenu(Player visitor, String targetName) { openVisitorWarpMenu(visitor, targetName, 1); }
-    public static void openOwnerWarpMenu(Player owner) { openOwnerWarpMenu(owner, 1); }
 
-    private static void setupNavigationBar(Inventory inv, int currentPage, int maxPages) {
-        ItemStack blackGlass = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
-        ItemMeta glassMeta = blackGlass.getItemMeta();
-        if (glassMeta != null) {
-            glassMeta.setDisplayName(" ");
-            blackGlass.setItemMeta(glassMeta);
-        }
-
-        for (int i : new int[]{45, 46, 47, 51, 52, 53}) {
-            inv.setItem(i, blackGlass);
-        }
-
-        if (currentPage > 1) {
-            ItemStack prevItem = new ItemStack(Material.PAPER);
-            ItemMeta prevMeta = prevItem.getItemMeta();
-            prevMeta.setDisplayName(ChatColor.RED + "Önceki Sayfa");
-            prevMeta.setCustomModelData(1);
-            prevItem.setItemMeta(prevMeta);
-            inv.setItem(48, prevItem);
-        } else {
-            inv.setItem(48, blackGlass);
-        }
-
-        ItemStack homeItem = new ItemStack(Material.PAPER);
-        ItemMeta homeMeta = homeItem.getItemMeta();
-        homeMeta.setDisplayName(ChatColor.YELLOW + "Ana Menü");
-        homeMeta.setCustomModelData(2);
-        homeItem.setItemMeta(homeMeta);
-        inv.setItem(49, homeItem);
-
-        if (currentPage < maxPages) {
-            ItemStack nextItem = new ItemStack(Material.PAPER);
-            ItemMeta nextMeta = nextItem.getItemMeta();
-            nextMeta.setDisplayName(ChatColor.GREEN + "Sonraki Sayfa");
-            nextMeta.setCustomModelData(3);
-            nextItem.setItemMeta(nextMeta);
-            inv.setItem(50, nextItem);
-        } else {
-            inv.setItem(50, blackGlass);
-        }
+    public static void openSelfTeleportWarpMenu(Player player) {
+        openSelfTeleportWarpMenu(player, 1);
     }
 
     public static void openSelfTeleportWarpMenu(Player player, int page) {
@@ -93,27 +56,20 @@ public class WarpMenu implements Listener {
             if (warp.isVisible() || player.isOp()) visibleWarps.add(warp);
         }
 
-        int maxPages = (int) Math.ceil(visibleWarps.size() / 45.0);
-        if (maxPages == 0) maxPages = 1;
-        Inventory inv = Bukkit.createInventory(null, 54, VISITOR_MENU_PREFIX + player.getName() + " #" + page);
+        int totalPages = Math.max(1, (int) Math.ceil((double) visibleWarps.size() / WARPS_PER_PAGE));
+        page = clampPage(page, totalPages);
 
-        int startIndex = (page - 1) * 45;
-        int endIndex = Math.min(startIndex + 45, visibleWarps.size());
+        Inventory inv = Bukkit.createInventory(null, 54, VISITOR_MENU_PREFIX + player.getName());
+        fillTeleportItems(inv, visibleWarps, page);
+        GuiUtils.applyNavigationBar(inv, page, totalPages);
 
-        for (int i = startIndex; i < endIndex; i++) {
-            Warp warp = visibleWarps.get(i);
-            ItemStack item = new ItemStack(warp.getIcon());
-            ItemMeta meta = item.getItemMeta();
-            if (meta != null) {
-                meta.setDisplayName(ChatColor.GREEN + warp.getName());
-                meta.setLore(Collections.singletonList(ChatColor.GRAY + "Warpa ışınlanmak için tıklayın."));
-                item.setItemMeta(meta);
-            }
-            inv.setItem(i - startIndex, item);
-        }
-
-        setupNavigationBar(inv, page, maxPages);
+        CURRENT_PAGE.put(player.getUniqueId(), page);
         player.openInventory(inv);
+    }
+
+
+    public static void openVisitorWarpMenu(Player visitor, String targetName) {
+        openVisitorWarpMenu(visitor, targetName, 1);
     }
 
     public static void openVisitorWarpMenu(Player visitor, String targetName, int page) {
@@ -141,28 +97,20 @@ public class WarpMenu implements Listener {
             if (warp.isVisible()) visibleWarps.add(warp);
         }
 
-        int maxPages = (int) Math.ceil(visibleWarps.size() / 45.0);
-        if (maxPages == 0) maxPages = 1;
+        int totalPages = Math.max(1, (int) Math.ceil((double) visibleWarps.size() / WARPS_PER_PAGE));
+        page = clampPage(page, totalPages);
 
-        Inventory inv = Bukkit.createInventory(null, 54, VISITOR_MENU_PREFIX + targetOwner.getName() + " #" + page);
+        Inventory inv = Bukkit.createInventory(null, 54, VISITOR_MENU_PREFIX + targetOwner.getName());
+        fillTeleportItems(inv, visibleWarps, page);
+        GuiUtils.applyNavigationBar(inv, page, totalPages);
 
-        int startIndex = (page - 1) * 45;
-        int endIndex = Math.min(startIndex + 45, visibleWarps.size());
-
-        for (int i = startIndex; i < endIndex; i++) {
-            Warp warp = visibleWarps.get(i);
-            ItemStack item = new ItemStack(warp.getIcon());
-            ItemMeta meta = item.getItemMeta();
-            if (meta != null) {
-                meta.setDisplayName(ChatColor.GREEN + warp.getName());
-                meta.setLore(Collections.singletonList(ChatColor.GRAY + "Warpa ışınlanmak için tıklayın."));
-                item.setItemMeta(meta);
-            }
-            inv.setItem(i - startIndex, item);
-        }
-
-        setupNavigationBar(inv, page, maxPages);
+        CURRENT_PAGE.put(visitor.getUniqueId(), page);
         visitor.openInventory(inv);
+    }
+
+
+    public static void openOwnerWarpMenu(Player owner) {
+        openOwnerWarpMenu(owner, 1);
     }
 
     public static void openOwnerWarpMenu(Player owner, int page) {
@@ -173,15 +121,15 @@ public class WarpMenu implements Listener {
         }
 
         List<Warp> allWarps = new ArrayList<>(island.getWarps().values());
-        int maxPages = (int) Math.ceil(allWarps.size() / 45.0);
-        if (maxPages == 0) maxPages = 1;
+        int totalPages = Math.max(1, (int) Math.ceil((double) allWarps.size() / WARPS_PER_PAGE));
+        page = clampPage(page, totalPages);
 
-        Inventory inv = Bukkit.createInventory(null, 54, OWNER_MENU_TITLE + " #" + page);
+        Inventory inv = Bukkit.createInventory(null, 54, OWNER_MENU_TITLE);
 
-        int startIndex = (page - 1) * 45;
-        int endIndex = Math.min(startIndex + 45, allWarps.size());
-
-        for (int i = startIndex; i < endIndex; i++) {
+        int start = (page - 1) * WARPS_PER_PAGE;
+        int end = Math.min(start + WARPS_PER_PAGE, allWarps.size());
+        int slot = 0;
+        for (int i = start; i < end; i++) {
             Warp warp = allWarps.get(i);
             ItemStack item = new ItemStack(warp.getIcon());
             ItemMeta meta = item.getItemMeta();
@@ -193,17 +141,39 @@ public class WarpMenu implements Listener {
                 meta.setLore(lore);
                 item.setItemMeta(meta);
             }
-            inv.setItem(i - startIndex, item);
+            inv.setItem(slot++, item);
         }
 
-        setupNavigationBar(inv, page, maxPages);
+        GuiUtils.applyNavigationBar(inv, page, totalPages);
+        CURRENT_PAGE.put(owner.getUniqueId(), page);
         owner.openInventory(inv);
+    }
+
+    private static void fillTeleportItems(Inventory inv, List<Warp> warps, int page) {
+        int start = (page - 1) * WARPS_PER_PAGE;
+        int end = Math.min(start + WARPS_PER_PAGE, warps.size());
+        int slot = 0;
+        for (int i = start; i < end; i++) {
+            Warp warp = warps.get(i);
+            ItemStack item = new ItemStack(warp.getIcon());
+            ItemMeta meta = item.getItemMeta();
+            if (meta != null) {
+                meta.setDisplayName(ChatColor.GREEN + warp.getName());
+                meta.setLore(Collections.singletonList(ChatColor.GRAY + "Warpa ışınlanmak için tıklayın."));
+                item.setItemMeta(meta);
+            }
+            inv.setItem(slot++, item);
+        }
+    }
+
+    private static int clampPage(int page, int totalPages) {
+        if (page < 1) return 1;
+        return Math.min(page, totalPages);
     }
 
     public static void openManageWarpMenu(Player owner, Warp warp) {
         Inventory inv = Bukkit.createInventory(null, 9, MANAGE_MENU_PREFIX + warp.getName());
 
-        // name
         ItemStack nameItem = new ItemStack(Material.NAME_TAG);
         ItemMeta nameMeta = nameItem.getItemMeta();
         if (nameMeta != null) {
@@ -216,7 +186,6 @@ public class WarpMenu implements Listener {
         }
         inv.setItem(0, nameItem);
 
-        // location
         ItemStack locItem = new ItemStack(Material.COMPASS);
         ItemMeta locMeta = locItem.getItemMeta();
         if (locMeta != null) {
@@ -229,7 +198,6 @@ public class WarpMenu implements Listener {
         }
         inv.setItem(2, locItem);
 
-        // icon
         ItemStack iconItem = new ItemStack(warp.getIcon());
         ItemMeta iconMeta = iconItem.getItemMeta();
         if (iconMeta != null) {
@@ -242,7 +210,6 @@ public class WarpMenu implements Listener {
         }
         inv.setItem(4, iconItem);
 
-        // visitor
         ItemStack visItem = new ItemStack(warp.isVisible() ? Material.LIME_DYE : Material.GRAY_DYE);
         ItemMeta visMeta = visItem.getItemMeta();
         if (visMeta != null) {
@@ -257,7 +224,6 @@ public class WarpMenu implements Listener {
         }
         inv.setItem(6, visItem);
 
-        // del
         ItemStack delItem = new ItemStack(Material.REDSTONE_BLOCK);
         ItemMeta delMeta = delItem.getItemMeta();
         if (delMeta != null) {
@@ -337,36 +303,22 @@ public class WarpMenu implements Listener {
 
         if (!(event.getWhoClicked() instanceof Player player)) return;
 
-        if (!title.startsWith(VISITOR_MENU_PREFIX) && !title.startsWith(OWNER_MENU_TITLE) && !title.startsWith(MANAGE_MENU_PREFIX)) {
-            return;
-        }
+        boolean isListMenu = title.startsWith(VISITOR_MENU_PREFIX) || title.equals(OWNER_MENU_TITLE);
+        boolean isManageMenu = title.startsWith(MANAGE_MENU_PREFIX);
+
+        if (!isListMenu && !isManageMenu) return;
 
         event.setCancelled(true);
 
+        if (isListMenu && GuiUtils.isNavigationSlot(event.getSlot())) {
+            handleNavigationClick(player, title, event.getSlot());
+            return;
+        }
+
         if (event.getCurrentItem() == null || event.getCurrentItem().getType() == Material.AIR) return;
 
-        int slot = event.getSlot();
-
         if (title.startsWith(VISITOR_MENU_PREFIX)) {
-            String rawData = title.replace(VISITOR_MENU_PREFIX, "");
-            String[] splitData = rawData.split(" #");
-            String targetName = splitData[0];
-            int currentPage = 1;
-            if (splitData.length > 1) {
-                try { currentPage = Integer.parseInt(splitData[1]); } catch (Exception ignored) {}
-            }
-
-            if (slot >= 45) {
-                if (slot == 48 && event.getCurrentItem().getType() == Material.PAPER) {
-                    openVisitorWarpMenu(player, targetName, currentPage - 1);
-                } else if (slot == 49 && event.getCurrentItem().getType() == Material.PAPER) {
-                    player.closeInventory();
-                    IsMenu.openIsMenu(player);
-                } else if (slot == 50 && event.getCurrentItem().getType() == Material.PAPER) {
-                    openVisitorWarpMenu(player, targetName, currentPage + 1);
-                }
-                return;
-            }
+            String targetName = title.replace(VISITOR_MENU_PREFIX, "");
 
             @SuppressWarnings("deprecation")
             OfflinePlayer targetPlayer = Bukkit.getOfflinePlayer(targetName);
@@ -390,28 +342,10 @@ public class WarpMenu implements Listener {
                         .replace("{warp}", warp.getName()));
             }
             player.closeInventory();
+            CURRENT_PAGE.remove(player.getUniqueId());
         }
 
-        else if (title.startsWith(OWNER_MENU_TITLE)) {
-            String rawData = title.replace(OWNER_MENU_TITLE, "");
-            int currentPage = 1;
-            if (rawData.startsWith(" #")) {
-                try { currentPage = Integer.parseInt(rawData.replace(" #", "")); } catch (Exception ignored) {}
-            }
-
-
-            if (slot >= 45) {
-                if (slot == 48 && event.getCurrentItem().getType() == Material.PAPER) {
-                    openOwnerWarpMenu(player, currentPage - 1);
-                } else if (slot == 49 && event.getCurrentItem().getType() == Material.PAPER) {
-                    player.closeInventory();
-                    player.performCommand("is");
-                } else if (slot == 50 && event.getCurrentItem().getType() == Material.PAPER) {
-                    openOwnerWarpMenu(player, currentPage + 1);
-                }
-                return;
-            }
-
+        else if (title.equals(OWNER_MENU_TITLE)) {
             Island island = SkyblockCore.getInstance().getIslandManager().getIsland(player.getUniqueId());
             if (island == null) return;
 
@@ -423,8 +357,7 @@ public class WarpMenu implements Listener {
             }
         }
 
-
-        else if (title.startsWith(MANAGE_MENU_PREFIX)) {
+        else if (isManageMenu) {
             Island island = SkyblockCore.getInstance().getIslandManager().getIsland(player.getUniqueId());
             if (island == null) return;
 
@@ -436,12 +369,11 @@ public class WarpMenu implements Listener {
                 return;
             }
 
-            // name change
+            int slot = event.getSlot();
+
             if (slot == 0) {
                 openSignRenameGUI(player, warp);
             }
-
-            // location change
             else if (slot == 2) {
                 Location playerLoc = player.getLocation();
                 Location center = island.getCenterLocation();
@@ -461,8 +393,6 @@ public class WarpMenu implements Listener {
                 player.sendMessage(msg.getMessage("warp.location-updated"));
                 openManageWarpMenu(player, warp);
             }
-
-            // icon change
             else if (slot == 4) {
                 ItemStack handItem = player.getInventory().getItemInMainHand();
                 if (handItem.getType() == Material.AIR) {
@@ -474,21 +404,40 @@ public class WarpMenu implements Listener {
                     openManageWarpMenu(player, warp);
                 }
             }
-
-            // visitor visible
             else if (slot == 6) {
                 warp.setVisible(!warp.isVisible());
                 player.sendMessage(msg.getMessage("warp.visibility-toggle")
                         .replace("{status}", warp.isVisible() ? "AÇIK" : "KAPALI"));
                 openManageWarpMenu(player, warp);
             }
-
-            // warp del
             else if (slot == 8) {
                 island.removeWarp(warp.getName());
                 player.sendMessage(msg.getMessage("warp.deleted")
                         .replace("{warp}", warp.getName()));
                 openOwnerWarpMenu(player);
+            }
+        }
+    }
+
+    private void handleNavigationClick(Player player, String title, int slot) {
+        if (slot == 49) {
+            player.closeInventory();
+            CURRENT_PAGE.remove(player.getUniqueId());
+            IsMenu.openIsMenu(player);
+            return;
+        }
+
+        int current = CURRENT_PAGE.getOrDefault(player.getUniqueId(), 1);
+        int targetPage = (slot == 45) ? current - 1 : current + 1;
+
+        if (title.equals(OWNER_MENU_TITLE)) {
+            openOwnerWarpMenu(player, targetPage);
+        } else if (title.startsWith(VISITOR_MENU_PREFIX)) {
+            String targetName = title.replace(VISITOR_MENU_PREFIX, "");
+            if (targetName.equalsIgnoreCase(player.getName())) {
+                openSelfTeleportWarpMenu(player, targetPage);
+            } else {
+                openVisitorWarpMenu(player, targetName, targetPage);
             }
         }
     }

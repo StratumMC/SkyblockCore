@@ -18,7 +18,6 @@ public class IsMenu implements Listener {
 
     private static final Set<Integer> WARPS_SLOTS = Set.of(30,31,32,39,40,41);
     private static final Set<Integer> ISLAND_GO_SLOTS = Set.of(45,46,47,48,49);
-    private static final Set<Integer> MEMBERS_GO_SLOTS = Set.of(9,10,11,12,18,19,20,21);
 
     public static void openIsMenu(Player player) {
         Inventory inv = Bukkit.createInventory(null, 54, MENU_TITLE);
@@ -55,9 +54,6 @@ public class IsMenu implements Listener {
             player.closeInventory();
             WarpMenu.openOwnerWarpMenu(player);
         } else if(ISLAND_GO_SLOTS.contains(clickedSlot)) {
-            player.closeInventory();
-            IsCommand.teleportToIsland(SkyblockCore.getInstance(), player);
-        } else if(MEMBERS_GO_SLOTS.contains(clickedSlot)) {
             player.closeInventory();
             IsCommand.teleportToIsland(SkyblockCore.getInstance(), player);
         }

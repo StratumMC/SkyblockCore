@@ -35,6 +35,12 @@ public class IsCommand {
     public static void registerCommand(SkyblockCore plugin) {
         HELP_MAP.clear();
 
+        /*ArgumentSuggestions<CommandSender> onlinePlayerSuggestions = ArgumentSuggestions.strings(info ->
+                Bukkit.getOnlinePlayers().stream().map(Player::getName).toArray(String[]::new)
+        );
+        is visit ve warpa auto complete fakat neden calısmadı bılmyorum
+        */
+
         ArgumentSuggestions<CommandSender> warpSuggestions = ArgumentSuggestions.strings(info -> {
             String targetName = info.previousArgs().get("target") != null ? (String) info.previousArgs().get("target") : "";
             if (targetName.isEmpty()) return new String[0];
@@ -104,7 +110,7 @@ public class IsCommand {
                 .withSubcommand(createSubCommand("create", "Yeni bir ada oluşturun.",
                         new CommandAPICommand("create")
                                 .executesPlayer((player, args) -> {
-                                    if (plugin.getIslandManager().getIsland(player.getUniqueId()) != null) {
+                                    if (plugin.getIslandManager().hasIsland(player.getUniqueId())) {
                                         player.sendMessage(msg.getMessage("island.already-has-island"));
                                         return;
                                     }
@@ -154,7 +160,7 @@ public class IsCommand {
                 .withSubcommand(createSubCommand("go", "Adanıza ışınlanın.",
                         new CommandAPICommand("go")
                                 .executesPlayer((player, args) -> {
-                                    if (plugin.getIslandManager().getIsland(player.getUniqueId()) != null) {
+                                    if (plugin.getIslandManager().hasIsland(player.getUniqueId())) {
                                         teleportToIsland(plugin, player);
                                     } else {
                                         player.sendMessage(msg.getMessage("island.no-island"));
@@ -407,6 +413,20 @@ public class IsCommand {
                                 })
                 ))
 
+
+                // /is permissions
+                .withSubcommand(createSubCommand("permissions", "[Admin] Rol yetkilerini düzenleyin.",
+                        new CommandAPICommand("permissions")
+                                .executesPlayer((player, args) -> {
+                                    Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
+                                    if (island == null) {
+                                        player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+                                    PermissionsMenu.openRoleSelectMenu(player, island);
+                                })
+                ))
+
                 // ADMIN COMMANDS
 
                 // /is set level <player> <amount>
@@ -473,6 +493,7 @@ public class IsCommand {
                                                 })
                                 )
                 ))
+
                 // /is
                 .executesPlayer((player, args) -> {
                     IsMenu.openIsMenu(player);

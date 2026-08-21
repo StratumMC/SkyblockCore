@@ -1,6 +1,7 @@
 package com.sallamadm.skyblockcore.island;
 
 import com.sallamadm.skyblockcore.SkyblockCore;
+import com.sallamadm.skyblockcore.island.enums.IslandRole;
 import org.bukkit.Location;
 import org.bukkit.block.Biome;
 
@@ -18,8 +19,13 @@ public class Island {
     private String islandName;
     private Biome biome;
     private boolean locked = false;
+
     private final Map<String, Warp> warps = new HashMap<>();
     private final Set<UUID> bannedPlayers = new HashSet<>();
+
+    private final Map<Integer, Set<String>> permissionCache = new HashMap<>();
+    private final Map<UUID, Integer> memberRoles = new HashMap<>();
+    private final Map<UUID, UUID> coopAddedBy = new HashMap<>();
 
 
     public Island(UUID ownerUUID) {
@@ -175,6 +181,76 @@ public class Island {
             try {
                 bannedPlayers.add(UUID.fromString(uuidStr.trim()));
             } catch (IllegalArgumentException ignored) {}
+        }
+    }
+
+    public int getRoleTier(UUID playerUuid) {
+        if (playerUuid.equals(ownerUUID)) return IslandRole.OWNER.getTier();
+        return memberRoles.getOrDefault(playerUuid, IslandRole.VISITOR.getTier());
+    }
+
+    public boolean hasPermission(int roleTier, String permissionNode) {
+        if (roleTier == IslandRole.OWNER.getTier()) return true;
+        Set<String> nodes = permissionCache.get(roleTier);
+        return nodes != null && nodes.contains(permissionNode);
+    }
+
+    public boolean hasPermission(UUID playerUuid, String permissionNode) {
+        return hasPermission(getRoleTier(playerUuid), permissionNode);
+    }
+
+    public void grantPermission(int roleTier, String node) {
+        permissionCache.computeIfAbsent(roleTier, k -> new HashSet<>()).add(node);
+        if (islandUuid != null) {
+            SkyblockCore.getInstance().getDataManager().setPermissionAsync(islandUuid, roleTier, node, true);
+        }
+    }
+
+    public void revokePermission(int roleTier, String node) {
+        Set<String> set = permissionCache.get(roleTier);
+        if (set != null) set.remove(node);
+        if (islandUuid != null) {
+            SkyblockCore.getInstance().getDataManager().setPermissionAsync(islandUuid, roleTier, node, false);
+        }
+    }
+
+    public Set<String> getPermissionsForTier(int roleTier) {
+        return permissionCache.getOrDefault(roleTier, Collections.emptySet());
+    }
+
+    public void setPermissionCache(Map<Integer, Set<String>> cache) {
+        this.permissionCache.clear();
+        this.permissionCache.putAll(cache);
+    }
+
+    public Map<UUID, Integer> getMemberRoles() {
+        return memberRoles;
+    }
+
+    public Map<UUID, UUID> getCoopAddedBy() {
+        return coopAddedBy;
+    }
+
+    public void addOrUpdateMember(UUID playerUuid, IslandRole role, UUID addedBy) {
+        memberRoles.put(playerUuid, role.getTier());
+        if (role == IslandRole.COOP && addedBy != null) {
+            coopAddedBy.put(playerUuid, addedBy);
+        } else {
+            coopAddedBy.remove(playerUuid);
+        }
+        SkyblockCore.getInstance().getDataManager().saveMemberAsync(islandUuid, playerUuid, role.getTier(), addedBy);
+    }
+
+    public void removeMember(UUID playerUuid) {
+        memberRoles.remove(playerUuid);
+        coopAddedBy.remove(playerUuid);
+        SkyblockCore.getInstance().getDataManager().removeMemberAsync(islandUuid, playerUuid);
+    }
+
+    public void loadMemberFromDb(UUID playerUuid, int roleTier, UUID addedBy) {
+        memberRoles.put(playerUuid, roleTier);
+        if (roleTier == IslandRole.COOP.getTier() && addedBy != null) {
+            coopAddedBy.put(playerUuid, addedBy);
         }
     }
 

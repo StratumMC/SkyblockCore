@@ -2,6 +2,7 @@ package com.sallamadm.skyblockcore.data;
 
 import com.sallamadm.skyblockcore.SkyblockCore;
 import com.sallamadm.skyblockcore.island.Island;
+import com.sallamadm.skyblockcore.island.IslandRole;
 import com.sallamadm.skyblockcore.island.Warp;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -69,6 +70,9 @@ public class DataManager {
             statement.execute("CREATE TABLE IF NOT EXISTS sb_available_grids (" +
                     "grid_index INT PRIMARY KEY)");
 
+            // island_uuid: yeni kurulumlarda bu CREATE ile gelir. Sizin DB'nizde zaten
+            // manuel eklediğiniz için burada bir şey değişmeyecek (IF NOT EXISTS var olan
+            // tabloyu değiştirmez), ama başka bir sunucuda sıfırdan kurulumda da doğru şema gelsin diye ekliyorum.
             statement.execute("CREATE TABLE IF NOT EXISTS sb_islands (" +
                     "owner_uuid VARCHAR(36) PRIMARY KEY, " +
                     "island_uuid VARCHAR(36) UNIQUE, " +
@@ -102,6 +106,7 @@ public class DataManager {
                     "PRIMARY KEY (owner_uuid, name), " +
                     "FOREIGN KEY (owner_uuid) REFERENCES sb_islands(owner_uuid) ON DELETE CASCADE)");
 
+            // YENİ — satır bazlı izin tablosu
             statement.execute("CREATE TABLE IF NOT EXISTS sb_island_permissions (" +
                     "island_uuid VARCHAR(36) NOT NULL, " +
                     "role_tier INT NOT NULL, " +
@@ -109,6 +114,7 @@ public class DataManager {
                     "PRIMARY KEY (island_uuid, role_tier, permission_node), " +
                     "FOREIGN KEY (island_uuid) REFERENCES sb_islands(island_uuid) ON DELETE CASCADE)");
 
+            // YENİ — üye/rol tablosu, added_by co-op bağımlılığı için
             statement.execute("CREATE TABLE IF NOT EXISTS sb_island_members (" +
                     "island_uuid VARCHAR(36) NOT NULL, " +
                     "player_uuid VARCHAR(36) NOT NULL, " +
@@ -254,6 +260,7 @@ public class DataManager {
     }
 
     private void saveIslandSync(Island island) throws SQLException {
+        // island_uuid NULL olamaz artık — Island constructor'ında otomatik üretiliyor (bkz. Island.java)
         String sql = "REPLACE INTO sb_islands (owner_uuid, island_uuid, grid_index, island_size, island_level, island_name, is_locked, biome, center_world, center_x, center_y, center_z, spawn_x, spawn_y, spawn_z, spawn_yaw, spawn_pitch, banned_players) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, island.getOwnerUUID().toString());
@@ -317,6 +324,12 @@ public class DataManager {
         }
     }
 
+    // ==================== YENİ: İZİN SİSTEMİ (ROW-BY-ROW) ====================
+
+    /**
+     * Tek bir izin satırını async ekler/siler. Çağıran taraf (Island.grantPermission/revokePermission)
+     * RAM cache'ini zaten güncel tuttuğu için burada sadece DB'yi senkron etmek yeterli.
+     */
     public void setPermissionAsync(String islandUuid, int roleTier, String node, boolean granted) {
         if (connection == null || islandUuid == null) return;
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
@@ -334,6 +347,7 @@ public class DataManager {
         });
     }
 
+    /** Ada yüklenirken (loadData içinde) senkron çağrılır — tüm izin satırlarını Map olarak döner. */
     private Map<Integer, Set<String>> loadPermissionsSync(String islandUuid) throws SQLException {
         Map<Integer, Set<String>> result = new HashMap<>();
         String sql = "SELECT role_tier, permission_node FROM sb_island_permissions WHERE island_uuid = ?";
@@ -350,6 +364,9 @@ public class DataManager {
         return result;
     }
 
+    // ==================== YENİ: ÜYE / ROL SİSTEMİ ====================
+
+    /** Üye rolünü async kaydeder (yeni üye ekleme veya rol değişikliği). addedBy sadece Co-op için doldurulur. */
     public void saveMemberAsync(String islandUuid, UUID playerUuid, int roleTier, UUID addedBy) {
         if (connection == null || islandUuid == null) return;
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
@@ -380,6 +397,8 @@ public class DataManager {
         });
     }
 
+    /** Ada yüklenirken senkron çağrılır. result[0] = memberRoles (uuid->tier), result[1] anlamına gelmez;
+     *  ayrı iki map döndürmek için basit bir tutucu sınıf yerine iki ayrı metot kullanıyoruz aşağıda. */
     private void loadMembersSync(Island island, String islandUuid) throws SQLException {
         String sql = "SELECT player_uuid, role_tier, added_by FROM sb_island_members WHERE island_uuid = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -391,6 +410,7 @@ public class DataManager {
                     String addedByStr = rs.getString("added_by");
                     UUID addedBy = addedByStr != null ? UUID.fromString(addedByStr) : null;
 
+                    island.loadMemberFromDb(playerUuid, tier, addedBy);
                 }
             }
         }
@@ -428,6 +448,8 @@ public class DataManager {
                     island.setLocked(rs.getBoolean("is_locked"));
                     island.loadBannedPlayersFromString(rs.getString("banned_players"));
 
+                    // island_uuid: DB'de doluysa onu kullan, boşsa (eski satır) constructor'da
+                    // üretilen UUID kalır ve bir sonraki autoSave'de DB'ye yazılır.
                     String dbIslandUuid = rs.getString("island_uuid");
                     if (dbIslandUuid != null && !dbIslandUuid.isEmpty()) {
                         island.setIslandUuid(dbIslandUuid);
@@ -446,6 +468,8 @@ public class DataManager {
                         }
                     }
 
+                    // YENİ: izinleri ve üyeleri RAM cache'ine yükle
+                    island.setPermissionCache(loadPermissionsSync(island.getIslandUuid()));
                     loadMembersSync(island, island.getIslandUuid());
                 }
             }
