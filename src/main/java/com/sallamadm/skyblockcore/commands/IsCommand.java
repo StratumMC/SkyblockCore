@@ -100,9 +100,14 @@ public class IsCommand {
                 .withSubcommand(createSubCommand("biome", "Adanızın biyomunu değiştirin.",
                         new CommandAPICommand("biome")
                                 .executesPlayer((player, args) -> {
-                                    Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
+                                    Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
                                     if (island == null) {
                                         player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+
+                                    if (!island.hasPermission(player.getUniqueId(), IslandPermissions.SET_BIOME.getNode())) {
+                                        player.sendMessage(msg.getMessage("general.no-permission"));
                                         return;
                                     }
                                     BiomeMenu.openBiomeMenu(player);
@@ -140,6 +145,8 @@ public class IsCommand {
                                     Bukkit.getPluginManager().callEvent(new IslandEvents.Create(player, island));
 
                                     plugin.getDataManager().saveData();
+
+                                    island.seedDefaultPermissionsIfEmpty();
 
                                     player.sendMessage(msg.getMessage("island.created"));
                                     BiomeMenu.changeIslandBiome(island, PLAINS);
@@ -185,9 +192,13 @@ public class IsCommand {
                 .withSubcommand(createSubCommand("lock", "Ziyaretçilere adanızı kapatın.",
                         new CommandAPICommand("lock")
                                 .executesPlayer((player, args) -> {
-                                    Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
+                                    Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
                                     if (island == null) {
                                         player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+                                    if (!island.hasPermission(player.getUniqueId(), IslandPermissions.LOCK_ISLAND.getNode())) {
+                                        player.sendMessage(msg.getMessage("general.no-permission"));
                                         return;
                                     }
 
@@ -205,9 +216,13 @@ public class IsCommand {
                 .withSubcommand(createSubCommand("unlock", "Adanızı ziyaretçilere açın.",
                         new CommandAPICommand("unlock")
                                 .executesPlayer((player, args) -> {
-                                    Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
+                                    Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
                                     if (island == null) {
                                         player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+                                    if (!island.hasPermission(player.getUniqueId(), IslandPermissions.LOCK_ISLAND.getNode())) {
+                                        player.sendMessage(msg.getMessage("general.no-permission"));
                                         return;
                                     }
 
@@ -226,9 +241,14 @@ public class IsCommand {
                         new CommandAPICommand("setwarp")
                                 .withArguments(new StringArgument("name"))
                                 .executesPlayer((player, args) -> {
-                                    Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
+                                    Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
                                     if (island == null) {
                                         player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+
+                                    if (!island.hasPermission(player.getUniqueId(), IslandPermissions.MANAGE_WARP.getNode())) {
+                                        player.sendMessage(msg.getMessage("general.no-permission"));
                                         return;
                                     }
 
@@ -257,9 +277,14 @@ public class IsCommand {
                         new CommandAPICommand("delwarp")
                                 .withArguments(new StringArgument("name"))
                                 .executesPlayer((player, args) -> {
-                                    Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
+                                    Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
                                     if (island == null) {
                                         player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+
+                                    if (!island.hasPermission(player.getUniqueId(), IslandPermissions.MANAGE_WARP.getNode())) {
+                                        player.sendMessage(msg.getMessage("general.no-permission"));
                                         return;
                                     }
 
@@ -278,6 +303,15 @@ public class IsCommand {
                 .withSubcommand(createSubCommand("warps", "Ada warplarınızı düzenleyin.",
                         new CommandAPICommand("warps")
                                 .executesPlayer((player, args) -> {
+                                    Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
+                                    if (island == null) {
+                                        player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+                                    if (!island.hasPermission(player.getUniqueId(), IslandPermissions.MANAGE_WARP.getNode())) {
+                                        player.sendMessage(msg.getMessage("general.no-permission"));
+                                        return;
+                                    }
                                     WarpMenu.openOwnerWarpMenu(player);
                                 })
                 ))
@@ -309,10 +343,15 @@ public class IsCommand {
                                 .withArguments(new PlayerArgument("target"))
                                 .executesPlayer((player, args) -> {
                                     Player target = (Player) args.get("target");
-                                    Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
+                                    Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
 
                                     if (island == null) {
                                         player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+
+                                    if (!island.hasPermission(player.getUniqueId(), IslandPermissions.KICK.getNode())) {
+                                        player.sendMessage(msg.getMessage("general.no-permission"));
                                         return;
                                     }
                                     if (player.equals(target)) {
@@ -340,10 +379,15 @@ public class IsCommand {
                                 .withArguments(new PlayerArgument("target"))
                                 .executesPlayer((player, args) -> {
                                     Player target = (Player) args.get("target");
-                                    Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
+                                    Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
 
                                     if (island == null) {
                                         player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+
+                                    if (!island.hasPermission(player.getUniqueId(), IslandPermissions.BAN.getNode())) {
+                                        player.sendMessage(msg.getMessage("general.no-permission"));
                                         return;
                                     }
                                     if (player.equals(target)) {
@@ -372,10 +416,15 @@ public class IsCommand {
                                 .withArguments(new PlayerArgument("target"))
                                 .executesPlayer((player, args) -> {
                                     Player target = (Player) args.get("target");
-                                    Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
+                                    Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
 
                                     if (island == null) {
                                         player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+
+                                    if (!island.hasPermission(player.getUniqueId(), IslandPermissions.UNBAN.getNode())) {
+                                        player.sendMessage(msg.getMessage("general.no-permission"));
                                         return;
                                     }
                                     if (!island.isBanned(target.getUniqueId())) {
@@ -392,9 +441,14 @@ public class IsCommand {
                 .withSubcommand(createSubCommand("setspawn", "Adanızın spawn noktasını ayarlayın.",
                         new CommandAPICommand("setspawn")
                                 .executesPlayer((player, args) -> {
-                                    Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
+                                    Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
                                     if (island == null) {
                                         player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+
+                                    if (!island.hasPermission(player.getUniqueId(), IslandPermissions.SET_SPAWN.getNode())) {
+                                        player.sendMessage(msg.getMessage("general.no-permission"));
                                         return;
                                     }
 

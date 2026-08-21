@@ -57,6 +57,7 @@ biome:
 protection:
   cannot-build: "&cBu adada blok kırıp/koyamazsınız!"
   cannot-interact: "&cBu adadaki eşyalar ile etkileşime geçemezsiniz!"
+  cannot-container: "&cBu adadaki sandık/depolara erişemezsiniz!"
   cannot-attack: "&cBu adada saldırı yapamazsınız!"
 
 auth:

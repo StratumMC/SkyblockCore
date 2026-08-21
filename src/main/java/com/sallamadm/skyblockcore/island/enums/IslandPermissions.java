@@ -2,6 +2,7 @@ package com.sallamadm.skyblockcore.island.enums;
 
 import org.bukkit.Material;
 
+import java.util.*;
 public enum IslandPermissions {
 
     KICK("island.kick", "Oyuncu Atma", Material.BARRIER),
@@ -37,5 +38,36 @@ public enum IslandPermissions {
             if (perm.node.equalsIgnoreCase(node)) return perm;
         }
         return null;
+    }
+    public static Set<String> getDefaultPermissionsForRole(IslandRole role) {
+        Set<String> all = new HashSet<>();
+        for (IslandPermissions p : values()) all.add(p.getNode());
+
+        switch (role) {
+            case ADMIN:
+                return all;
+
+            case MOD: {
+                Set<String> mod = new HashSet<>(all);
+                mod.remove(BAN.getNode());
+                mod.remove(UNBAN.getNode());
+                mod.remove(SET_SPAWN.getNode());
+                return mod;
+            }
+
+            case MEMBER:
+                return new HashSet<>(Arrays.asList(
+                        BLOCK_BREAK.getNode(), BLOCK_PLACE.getNode(),
+                        CONTAINER_ACCESS.getNode(), INTERACT.getNode()
+                ));
+
+            case COOP:
+                return new HashSet<>(Arrays.asList(BLOCK_BREAK.getNode(), BLOCK_PLACE.getNode()));
+
+            case OWNER:
+            case VISITOR:
+            default:
+                return Collections.emptySet();
+        }
     }
 }

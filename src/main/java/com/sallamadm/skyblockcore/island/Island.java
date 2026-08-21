@@ -1,6 +1,7 @@
 package com.sallamadm.skyblockcore.island;
 
 import com.sallamadm.skyblockcore.SkyblockCore;
+import com.sallamadm.skyblockcore.island.enums.IslandPermissions;
 import com.sallamadm.skyblockcore.island.enums.IslandRole;
 import org.bukkit.Location;
 import org.bukkit.block.Biome;
@@ -251,6 +252,17 @@ public class Island {
         memberRoles.put(playerUuid, roleTier);
         if (roleTier == IslandRole.COOP.getTier() && addedBy != null) {
             coopAddedBy.put(playerUuid, addedBy);
+        }
+    }
+
+    public void seedDefaultPermissionsIfEmpty() {
+        for (IslandRole role : new IslandRole[]{IslandRole.ADMIN, IslandRole.MOD, IslandRole.MEMBER, IslandRole.COOP}) {
+            Set<String> current = permissionCache.get(role.getTier());
+            if (current == null || current.isEmpty()) {
+                for (String node : IslandPermissions.getDefaultPermissionsForRole(role)) {
+                    grantPermission(role.getTier(), node);
+                }
+            }
         }
     }
 

@@ -45,7 +45,7 @@ public class WarpMenu implements Listener {
     }
 
     public static void openSelfTeleportWarpMenu(Player player, int page) {
-        Island island = SkyblockCore.getInstance().getIslandManager().getIsland(player.getUniqueId());
+        Island island = SkyblockCore.getInstance().getIslandManager().getIslandByMember(player.getUniqueId());
         if (island == null) {
             player.sendMessage(msg.getMessage("island.no-island"));
             return;
@@ -114,7 +114,7 @@ public class WarpMenu implements Listener {
     }
 
     public static void openOwnerWarpMenu(Player owner, int page) {
-        Island island = SkyblockCore.getInstance().getIslandManager().getIsland(owner.getUniqueId());
+        Island island = SkyblockCore.getInstance().getIslandManager().getIslandByMember(owner.getUniqueId());
         if (island == null) {
             owner.sendMessage(msg.getMessage("island.no-island"));
             return;
