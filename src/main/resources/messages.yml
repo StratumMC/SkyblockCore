@@ -60,6 +60,22 @@ protection:
   cannot-container: "&cBu adadaki sandık/depolara erişemezsiniz!"
   cannot-attack: "&cBu adada saldırı yapamazsınız!"
 
+fly:
+  wrong-world: "&cBu komutu sadece skyblock dünyasında kullanabilirsin!"
+  not-on-your-island: "&cSadece kendi adanda uçabilirsin!"
+  no-time-left: "&cKalan fly sürenüz yok!"
+  enabled: "&aFly modu açıldı!"
+  disabled: "&eFly modu kapatıldı."
+  left-island: "&cAdanızdan ayrıldığınız için fly modu otomatik olarak kapatıldı."
+  time-expired: "&cFly sürenüz doldu, fly modu kapatıldı."
+  invalid-item-amount: "&cSadece 10 veya 30 dakikalık item verebilirsiniz!"
+  item-given: "&a{target} adlı oyuncuya {minutes} dakikalık fly itemi verildi."
+  item-received: "&a{minutes} dakikalık bir fly itemi aldınız!"
+  item-used: "&aFly sürenüze {minutes} dakika eklendi!"
+  no-island-here: "&cBurada bir ada yok!"
+  no-permission: "&cBu adada uçma izniniz yok!"
+  dont-fly: "&cUçarken bunu yapamazsınız!"
+
 auth:
   register-prompt: "&cSunucuya kayıt olmalısın! Lütfen /register <şifre> <eposta> komutunu kullan."
   login-prompt: "&cLütfen giriş yapmak için /login <şifre> komutunu kullan."

@@ -2,6 +2,7 @@ package com.sallamadm.skyblockcore.gui;
 
 import com.sallamadm.skyblockcore.SkyblockCore;
 import com.sallamadm.skyblockcore.commands.IsCommand;
+import com.sallamadm.skyblockcore.island.Island;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -18,6 +19,7 @@ public class IsMenu implements Listener {
 
     private static final Set<Integer> WARPS_SLOTS = Set.of(30,31,32,39,40,41);
     private static final Set<Integer> ISLAND_GO_SLOTS = Set.of(45,46,47,48,49);
+    private static final Set<Integer> MEMBERS_SLOTS = Set.of(9,10,11,12,18,19,20,21);
 
     public static void openIsMenu(Player player) {
         Inventory inv = Bukkit.createInventory(null, 54, MENU_TITLE);
@@ -56,6 +58,10 @@ public class IsMenu implements Listener {
         } else if(ISLAND_GO_SLOTS.contains(clickedSlot)) {
             player.closeInventory();
             IsCommand.teleportToIsland(SkyblockCore.getInstance(), player);
+        } else if(MEMBERS_SLOTS.contains(clickedSlot)) {
+            player.closeInventory();
+            MembersMenu.openMembersMenu(player,
+                    SkyblockCore.getInstance().getIslandManager().getIslandByMember(player.getUniqueId()));
         }
     }
 }

@@ -146,4 +146,18 @@ public class IslandManager {
     public List<Integer> getAvailableGridIndices() {
         return availableGridIndices;
     }
+
+    public Island getIslandAt(Location loc) {
+        if (loc == null || loc.getWorld() == null) return null;
+
+        for (Island island : islands.values()) {
+            if (island.getCenterLocation() == null) continue;
+            if (!island.getCenterLocation().getWorld().equals(loc.getWorld())) continue;
+
+            if (island.isWithinBounds(loc)) {
+                return island;
+            }
+        }
+        return null;
+    }
 }

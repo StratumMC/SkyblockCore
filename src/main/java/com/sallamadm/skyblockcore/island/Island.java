@@ -266,4 +266,18 @@ public class Island {
         }
     }
 
+    public boolean isWithinBounds(Location loc) {
+        if (loc == null || loc.getWorld() == null || centerLocation == null || centerLocation.getWorld() == null) return false;
+        if (!loc.getWorld().equals(centerLocation.getWorld())) return false;
+
+        int radius = islandSize / 2;
+        int minX = centerLocation.getBlockX() - radius;
+        int maxX = centerLocation.getBlockX() + radius;
+        int minZ = centerLocation.getBlockZ() - radius;
+        int maxZ = centerLocation.getBlockZ() + radius;
+
+        return loc.getBlockX() >= minX && loc.getBlockX() <= maxX &&
+                loc.getBlockZ() >= minZ && loc.getBlockZ() <= maxZ;
+    }
+
 }

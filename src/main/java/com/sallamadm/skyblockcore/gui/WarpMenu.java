@@ -389,6 +389,11 @@ public class WarpMenu implements Listener {
                     return;
                 }
 
+                if(player.isFlying()) {
+                    player.sendMessage(msg.getMessage("fly.dont-fly"));
+                    return;
+                }
+
                 warp.setLocation(playerLoc);
                 player.sendMessage(msg.getMessage("warp.location-updated"));
                 openManageWarpMenu(player, warp);

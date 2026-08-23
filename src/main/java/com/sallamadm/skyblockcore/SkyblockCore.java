@@ -1,10 +1,9 @@
 package com.sallamadm.skyblockcore;
 
-import com.sallamadm.skyblockcore.commands.IsCommand;
-import com.sallamadm.skyblockcore.commands.LoginCommand;
-import com.sallamadm.skyblockcore.commands.RegisterCommand;
+import com.sallamadm.skyblockcore.commands.*;
 import com.sallamadm.skyblockcore.config.MessageManager;
 import com.sallamadm.skyblockcore.data.DataManager;
+import com.sallamadm.skyblockcore.fly.FlightManager;
 import com.sallamadm.skyblockcore.gui.*;
 import com.sallamadm.skyblockcore.island.InviteManager;
 import com.sallamadm.skyblockcore.island.IslandManager;
@@ -24,6 +23,7 @@ public final class SkyblockCore extends JavaPlugin {
     private WorldManager worldManager;
     private MessageManager messageManager;
     private InviteManager inviteManager;
+    private FlightManager flightManager;
 
 
     @Override
@@ -50,6 +50,8 @@ public final class SkyblockCore extends JavaPlugin {
         this.scoreboardManager = new ScoreboardManager(this);
         this.worldManager = new WorldManager(this);
         this.inviteManager = new InviteManager();
+        this.flightManager = new FlightManager(this);
+
         CommandAPI.onEnable();
 
         this.dataManager = new DataManager(this);
@@ -58,6 +60,8 @@ public final class SkyblockCore extends JavaPlugin {
         IsCommand.registerCommand(this);
         RegisterCommand.registerCommand(this);
         LoginCommand.registerCommand(this);
+        FlyCommand.registerCommand(this);
+        FlyItemCommand.registerCommand(this);
 
 
         getServer().getPluginManager().registerEvents(new JoinListener(this), this);
@@ -65,6 +69,8 @@ public final class SkyblockCore extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new IslandTeleportListener(this), this);
         getServer().getPluginManager().registerEvents(new IslandProtectionListener(this), this);
         getServer().getPluginManager().registerEvents(new AuthListener(this), this);
+        getServer().getPluginManager().registerEvents(new FlyItemListener(this), this);
+        getServer().getPluginManager().registerEvents(flightManager, this);
 
         //guis
         getServer().getPluginManager().registerEvents(new WarpMenu(), this);
@@ -85,7 +91,9 @@ public final class SkyblockCore extends JavaPlugin {
             getLogger().info("SkyblockCore datas saved in islandData.yml.");
         }
 
-
+        if (flightManager != null) {
+            flightManager.saveAllSync();
+        }
         CommandAPI.onDisable();
         getLogger().info("Skyblock Core is now deactivated.");
     }
@@ -114,6 +122,9 @@ public final class SkyblockCore extends JavaPlugin {
     }
     public InviteManager getInviteManager() {
         return inviteManager;
+    }
+    public FlightManager getFlightManager() {
+        return flightManager;
     }
 
 }

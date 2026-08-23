@@ -17,7 +17,8 @@ public enum IslandPermissions {
     SET_BIOME("island.setbiome", "Biyom Değiştirme", Material.GRASS_BLOCK),
     LOCK_ISLAND("island.lock", "Ada Kilitleme", Material.TRIPWIRE_HOOK),
     INVITE("island.invite", "Davet Etme", Material.PAPER),
-    MANAGE_ROLES("island.manageroles", "Rol Yönetimi", Material.NAME_TAG);
+    MANAGE_ROLES("island.manageroles", "Rol Yönetimi", Material.NAME_TAG),
+    FLY("island.fly", "Uçuş İzni", Material.FEATHER);
 
     private final String node;
     private final String displayName;
@@ -58,11 +59,15 @@ public enum IslandPermissions {
             case MEMBER:
                 return new HashSet<>(Arrays.asList(
                         BLOCK_BREAK.getNode(), BLOCK_PLACE.getNode(),
-                        CONTAINER_ACCESS.getNode(), INTERACT.getNode()
+                        CONTAINER_ACCESS.getNode(), INTERACT.getNode(),
+                        FLY.getNode()
                 ));
 
             case COOP:
-                return new HashSet<>(Arrays.asList(BLOCK_BREAK.getNode(), BLOCK_PLACE.getNode()));
+                return new HashSet<>(Arrays.asList(
+                        BLOCK_BREAK.getNode(), BLOCK_PLACE.getNode(),
+                        FLY.getNode()
+                ));
 
             case OWNER:
             case VISITOR:

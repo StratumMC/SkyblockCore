@@ -264,6 +264,10 @@ public class IsCommand {
                                         player.sendMessage(msg.getMessage("warp.outside-boundary"));
                                         return;
                                     }
+                                    if(player.isFlying()) {
+                                        player.sendMessage(msg.getMessage("fly.dont-fly"));
+                                        return;
+                                    }
 
                                     String warpName = (String) args.get("name");
                                     Warp warp = new Warp(warpName, loc);
@@ -461,6 +465,11 @@ public class IsCommand {
                                     int radius = island.getIslandSize() / 2;
                                     if (Math.abs(loc.getBlockX() - center.getBlockX()) > radius || Math.abs(loc.getBlockZ() - center.getBlockZ()) > radius) {
                                         player.sendMessage(msg.getMessage("island.outside-boundary"));
+                                        return;
+                                    }
+
+                                    if(player.isFlying()) {
+                                        player.sendMessage(msg.getMessage("fly.dont-fly"));
                                         return;
                                     }
                                     island.setSpawnLocation(loc);

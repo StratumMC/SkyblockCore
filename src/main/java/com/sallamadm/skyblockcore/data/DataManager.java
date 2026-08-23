@@ -124,7 +124,8 @@ public class DataManager {
                     "password VARCHAR(255) NOT NULL, " +
                     "role VARCHAR(32) DEFAULT 'player', " +
                     "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
-                    "credit INT DEFAULT 0)");
+                    "credit INT DEFAULT 0, " +
+                    "fly_seconds BIGINT NOT NULL DEFAULT 0)");
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -143,6 +144,37 @@ public class DataManager {
                 e.printStackTrace();
             }
         });
+    }
+
+    public long loadFlyTimeSync(UUID uuid) {
+        if (connection == null) return 0L;
+        String sql = "SELECT fly_seconds FROM sb_accounts WHERE uuid = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, uuid.toString());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getLong("fly_seconds");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0L;
+    }
+
+    public void saveFlyTimeAsync(UUID uuid, long remainingSeconds) {
+        if (connection == null) return;
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> saveFlyTimeSync(uuid, remainingSeconds));
+    }
+
+    public void saveFlyTimeSync(UUID uuid, long remainingSeconds) {
+        if (connection == null) return;
+        String sql = "UPDATE sb_accounts SET fly_seconds = ? WHERE uuid = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, remainingSeconds);
+            ps.setString(2, uuid.toString());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public boolean isRegistered(String username) {
