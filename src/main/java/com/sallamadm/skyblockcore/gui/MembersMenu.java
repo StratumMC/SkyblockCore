@@ -1,9 +1,11 @@
 package com.sallamadm.skyblockcore.gui;
 
 import com.sallamadm.skyblockcore.SkyblockCore;
+import com.sallamadm.skyblockcore.border.BorderManager;
 import com.sallamadm.skyblockcore.config.MessageManager;
 import com.sallamadm.skyblockcore.gui.util.GuiUtils;
 import com.sallamadm.skyblockcore.island.Island;
+import com.sallamadm.skyblockcore.island.enums.IslandPermissions;
 import com.sallamadm.skyblockcore.island.enums.IslandRole;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -25,7 +27,6 @@ public class MembersMenu implements Listener {
     private static MessageManager msg = SkyblockCore.getInstance().getMessageManager();
 
     private static final String MENU_TITLE = ChatColor.DARK_AQUA + "Ada Üyeleri";
-
     private static final int PERMISSIONS_SIGN_SLOT = 44;
     private static final int MEMBERS_PER_PAGE = 44;
 
@@ -79,7 +80,9 @@ public class MembersMenu implements Listener {
 
         boolean isOwner = targetRole == IslandRole.OWNER;
         boolean cyclable = CYCLE_ROLES.contains(targetRole);
-        boolean editable = !isOwner && cyclable && targetRole.getTier() > actorTier;
+        boolean roleEditable = !isOwner && cyclable && targetRole.getTier() > actorTier;
+        boolean kickable = !isOwner && targetRole.getTier() > actorTier
+                && island.hasPermission(viewer.getUniqueId(), IslandPermissions.KICK.getNode());
 
         ItemStack item = new ItemStack(Material.PLAYER_HEAD);
         SkullMeta meta = (SkullMeta) item.getItemMeta();
@@ -92,13 +95,19 @@ public class MembersMenu implements Listener {
             lore.add(ChatColor.GRAY + "Rol: " + roleColor(targetRole) + targetRole.getDisplayName());
 
             if (isOwner) {
-                lore.add(ChatColor.DARK_GRAY + "Ada sahibinin rolü değiştirilemez.");
-            } else if (!cyclable) {
-                lore.add(ChatColor.DARK_GRAY + "Bu rol buradan değiştirilemez. (/is coop kullanın)");
-            } else if (editable) {
-                lore.add(ChatColor.YELLOW + "Rolü artırmak için tıklayın.");
+                lore.add(ChatColor.DARK_GRAY + "Ada sahibi düzenlenemez/atılamaz.");
             } else {
-                lore.add(ChatColor.RED + "Bu oyuncunun rolünü değiştirme yetkiniz yok.");
+                if (cyclable && roleEditable) {
+                    lore.add(ChatColor.YELLOW + "Sol tık: rolü artır.");
+                } else if (!cyclable) {
+                    lore.add(ChatColor.DARK_GRAY + "Rolü buradan değiştirilemez. (/is coop)");
+                } else {
+                    lore.add(ChatColor.RED + "Rolünü değiştirme yetkiniz yok.");
+                }
+
+                if (kickable) {
+                    lore.add(ChatColor.RED + "Sağ tık: adadan at.");
+                }
             }
             meta.setLore(lore);
             item.setItemMeta(meta);
@@ -168,7 +177,12 @@ public class MembersMenu implements Listener {
         if (!(clicked.getItemMeta() instanceof SkullMeta skullMeta) || skullMeta.getOwningPlayer() == null) return;
 
         UUID targetUuid = skullMeta.getOwningPlayer().getUniqueId();
-        handleRoleCycle(viewer, island, targetUuid);
+
+        if (event.isRightClick()) {
+            handleKickMember(viewer, island, targetUuid);
+        } else {
+            handleRoleCycle(viewer, island, targetUuid);
+        }
     }
 
     private void handleRoleCycle(Player viewer, Island island, UUID targetUuid) {
@@ -214,6 +228,49 @@ public class MembersMenu implements Listener {
         if (targetPlayer != null && targetPlayer.isOnline()) {
             targetPlayer.sendMessage(msg.getMessage("members.role-changed-notify")
                     .replace("{role}", nextRole.getDisplayName()));
+        }
+
+        int page = CURRENT_PAGE.getOrDefault(viewer.getUniqueId(), 1);
+        openMembersMenu(viewer, island, page);
+    }
+
+    private void handleKickMember(Player viewer, Island island, UUID targetUuid) {
+        if (targetUuid.equals(island.getOwnerUUID())) {
+            viewer.sendMessage(msg.getMessage("members.cannot-kick-owner"));
+            return;
+        }
+
+        if (!island.getMemberRoles().containsKey(targetUuid)) {
+            viewer.sendMessage(msg.getMessage("members.not-a-member"));
+            return;
+        }
+
+        if (!island.hasPermission(viewer.getUniqueId(), IslandPermissions.KICK.getNode())) {
+            viewer.sendMessage(msg.getMessage("general.no-permission"));
+            return;
+        }
+
+        int actorTier = island.getRoleTier(viewer.getUniqueId());
+        int targetTier = island.getRoleTier(targetUuid);
+        if (targetTier <= actorTier) {
+            viewer.sendMessage(msg.getMessage("members.cannot-kick-higher-rank"));
+            return;
+        }
+
+        island.removeMember(targetUuid);
+
+        OfflinePlayer targetOffline = Bukkit.getOfflinePlayer(targetUuid);
+        String targetName = targetOffline.getName() != null ? targetOffline.getName() : "Oyuncu";
+        viewer.sendMessage(msg.getMessage("members.kick-success").replace("{target}", targetName));
+
+        Player targetOnline = Bukkit.getPlayer(targetUuid);
+        if (targetOnline != null && targetOnline.isOnline()) {
+            targetOnline.sendMessage(msg.getMessage("members.kicked-notify"));
+            if (island.isWithinBounds(targetOnline.getLocation())) {
+                targetOnline.setFallDistance(0);
+                BorderManager.removeBorder(targetOnline);
+                targetOnline.teleport(Bukkit.getWorlds().get(0).getSpawnLocation());
+            }
         }
 
         int page = CURRENT_PAGE.getOrDefault(viewer.getUniqueId(), 1);

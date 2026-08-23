@@ -3,6 +3,7 @@ package com.sallamadm.skyblockcore.gui;
 import com.sallamadm.skyblockcore.SkyblockCore;
 import com.sallamadm.skyblockcore.config.MessageManager;
 import com.sallamadm.skyblockcore.island.Island;
+import com.sallamadm.skyblockcore.island.enums.IslandPermissions;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
@@ -74,10 +75,16 @@ public class BiomeMenu implements Listener {
         }
 
         if (selectedBiome != null) {
-            Island island = SkyblockCore.getInstance().getIslandManager().getIsland(player.getUniqueId());
+            Island island = SkyblockCore.getInstance().getIslandManager().getIslandByMember(player.getUniqueId());
 
             if (island == null) {
                 player.sendMessage(msg.getMessage("island.no-island"));
+                player.closeInventory();
+                return;
+            }
+
+            if (!island.hasPermission(player.getUniqueId(), IslandPermissions.SET_BIOME.getNode())) {
+                player.sendMessage(msg.getMessage("general.no-permission"));
                 player.closeInventory();
                 return;
             }

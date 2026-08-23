@@ -33,6 +33,8 @@ island:
   spawn-set: "&aAdanızın ışınlanma (spawn) noktası başarıyla güncellendi!"
   must-be-on-island: "&cBunu yapabilmek için adanda olmalısın!"
   outside-boundary: "&cBu komutu yalnızca ada sınırları içinde kullanabilirsin!"
+  cannot-ban-higher-rank: "&cBu oyuncuyu banlayamazsınız!"
+  cannot-kick-higher-rank: "&cBu oyuncuyu kickleyemezsin!"
 
 warp:
   created: "&aWarp &e{warp} &aoluşturuldu! Şu anda kullancılardan gizli."
@@ -102,6 +104,11 @@ members:
   cannot-edit-coop: "&cBu rol buradan değiştirilemez, /is coop komutunu kullanın!"
   role-changed: "&e{target}&a adlı oyuncunun rolü &e{role}&a olarak değiştirildi."
   role-changed-notify: "&aRolün &e{role}&a olarak değiştirildi."
+  not-a-member: "&cBu oyuncu adanızın üyesi değil!"
+  cannot-kick-owner: "&cAda sahibini atamazsınız!"
+  cannot-kick-higher-rank: "&cBu oyuncuyu atamazsınız!"
+  kicked-notify: "&cAdadan atıldınız!"
+  kick-success: "&e{target}&a adlı oyuncu adadan atıldı."
 
 invite:
   cannot-invite-self: "&cKendini davet edemezsin!"

@@ -281,7 +281,7 @@ public class WarpMenu implements Listener {
 
             newWarpName = newWarpName.trim();
 
-            Island island = SkyblockCore.getInstance().getIslandManager().getIsland(player.getUniqueId());
+            Island island = SkyblockCore.getInstance().getIslandManager().getIslandByMember(player.getUniqueId());
             if (island != null) {
                 island.renameWarp(oldWarpName, newWarpName);
                 player.sendMessage(msg.getMessage("warp.renamed").replace("{name}", newWarpName));
@@ -323,10 +323,17 @@ public class WarpMenu implements Listener {
             @SuppressWarnings("deprecation")
             OfflinePlayer targetPlayer = Bukkit.getOfflinePlayer(targetName);
 
-            Island island = SkyblockCore.getInstance().getIslandManager().getIsland(targetPlayer.getUniqueId());
+            Island island = SkyblockCore.getInstance().getIslandManager().getIslandByMember(targetPlayer.getUniqueId());
             if (island == null) {
                 player.sendMessage(msg.getMessage("general.island-not-found"));
                 player.closeInventory();
+                return;
+            }
+
+            if (island.isBanned(player.getUniqueId()) && !player.isOp()) {
+                player.sendMessage(msg.getMessage("island.banned"));
+                player.closeInventory();
+                CURRENT_PAGE.remove(player.getUniqueId());
                 return;
             }
 
@@ -346,7 +353,7 @@ public class WarpMenu implements Listener {
         }
 
         else if (title.equals(OWNER_MENU_TITLE)) {
-            Island island = SkyblockCore.getInstance().getIslandManager().getIsland(player.getUniqueId());
+            Island island = SkyblockCore.getInstance().getIslandManager().getIslandByMember(player.getUniqueId());
             if (island == null) return;
 
             String warpName = ChatColor.stripColor(event.getCurrentItem().getItemMeta().getDisplayName());
@@ -358,7 +365,7 @@ public class WarpMenu implements Listener {
         }
 
         else if (isManageMenu) {
-            Island island = SkyblockCore.getInstance().getIslandManager().getIsland(player.getUniqueId());
+            Island island = SkyblockCore.getInstance().getIslandManager().getIslandByMember(player.getUniqueId());
             if (island == null) return;
 
             String warpName = title.replace(MANAGE_MENU_PREFIX, "");

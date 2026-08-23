@@ -15,9 +15,10 @@ public enum IslandPermissions {
     INTERACT("island.interact", "Eşya Etkileşimi", Material.STICK),
     SET_SPAWN("island.setspawn", "Spawn Ayarlama", Material.RED_BED),
     SET_BIOME("island.setbiome", "Biyom Değiştirme", Material.GRASS_BLOCK),
+    SET_NAME("island.setname", "İsim Değiştirme", Material.NAME_TAG),
     LOCK_ISLAND("island.lock", "Ada Kilitleme", Material.TRIPWIRE_HOOK),
     INVITE("island.invite", "Davet Etme", Material.PAPER),
-    MANAGE_ROLES("island.manageroles", "Rol Yönetimi", Material.NAME_TAG),
+    MANAGE_ROLES("island.manageroles", "Rol Yönetimi", Material.MINECART),
     FLY("island.fly", "Uçuş İzni", Material.FEATHER);
 
     private final String node;

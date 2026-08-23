@@ -70,7 +70,7 @@ public class IsCommand {
                 .withSubcommand(createSubCommand("level", "Ada levelinizi görün.",
                         new CommandAPICommand("level")
                                 .executesPlayer((player, args) -> {
-                                    Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
+                                    Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
                                     if (island == null) {
                                         player.sendMessage(msg.getMessage("island.no-island"));
                                         return;
@@ -84,9 +84,13 @@ public class IsCommand {
                         new CommandAPICommand("setname")
                                 .withArguments(new StringArgument("name"))
                                 .executesPlayer((player, args) -> {
-                                    Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
+                                    Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
                                     if (island == null) {
                                         player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+                                    if (!island.hasPermission(player.getUniqueId(), IslandPermissions.SET_NAME.getNode())) {
+                                        player.sendMessage(msg.getMessage("general.no-permission"));
                                         return;
                                     }
                                     String newName = (String) args.get("name");
@@ -118,7 +122,7 @@ public class IsCommand {
                 .withSubcommand(createSubCommand("create", "Yeni bir ada oluşturun.",
                         new CommandAPICommand("create")
                                 .executesPlayer((player, args) -> {
-                                    if (plugin.getIslandManager().hasIsland(player.getUniqueId())) {
+                                    if (plugin.getIslandManager().getIslandByMember(player.getUniqueId()) != null) {
                                         player.sendMessage(msg.getMessage("island.already-has-island"));
                                         return;
                                     }
@@ -170,11 +174,7 @@ public class IsCommand {
                 .withSubcommand(createSubCommand("go", "Adanıza ışınlanın.",
                         new CommandAPICommand("go")
                                 .executesPlayer((player, args) -> {
-                                    if (plugin.getIslandManager().hasIsland(player.getUniqueId())) {
-                                        teleportToIsland(plugin, player);
-                                    } else {
-                                        player.sendMessage(msg.getMessage("island.no-island"));
-                                    }
+                                    teleportToIsland(plugin, player);
                                 })
                 ))
 
@@ -366,6 +366,12 @@ public class IsCommand {
                                         player.sendMessage(msg.getMessage("general.no-permission"));
                                         return;
                                     }
+                                    int actorTier = island.getRoleTier(player.getUniqueId());
+                                    int targetTier = island.getRoleTier(target.getUniqueId());
+                                    if (targetTier <= actorTier) {
+                                        player.sendMessage(msg.getMessage("island.cannot-kick-higher-rank"));
+                                        return;
+                                    }
                                     if (!isPlayerOnIsland(target, island)) {
                                         player.sendMessage(msg.getMessage("island.target-not-on-island"));
                                         return;
@@ -401,6 +407,17 @@ public class IsCommand {
                                     if (target.isOp()) {
                                         player.sendMessage(msg.getMessage("general.no-permission"));
                                         return;
+                                    }
+
+                                    int actorTier = island.getRoleTier(player.getUniqueId());
+                                    int targetTier = island.getRoleTier(target.getUniqueId());
+                                    if (targetTier <= actorTier) {
+                                        player.sendMessage(msg.getMessage("island.cannot-ban-higher-rank"));
+                                        return;
+                                    }
+
+                                    if (island.getMemberRoles().containsKey(target.getUniqueId())) {
+                                        island.removeMember(target.getUniqueId());
                                     }
 
                                     island.banPlayer(target.getUniqueId());
@@ -484,7 +501,7 @@ public class IsCommand {
                 .withSubcommand(createSubCommand("permissions", "[Admin] Rol yetkilerini düzenleyin.",
                         new CommandAPICommand("permissions")
                                 .executesPlayer((player, args) -> {
-                                    Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
+                                    Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
                                     if (island == null) {
                                         player.sendMessage(msg.getMessage("island.no-island"));
                                         return;
@@ -547,7 +564,7 @@ public class IsCommand {
                                         return;
                                     }
 
-                                    if (plugin.getIslandManager().hasIsland(player.getUniqueId())) {
+                                    if (plugin.getIslandManager().getIslandByMember(player.getUniqueId()) != null) {
                                         inviteManager.removeInvite(player.getUniqueId());
                                         player.sendMessage(msg.getMessage("invite.auto-rejected-has-island"));
                                         return;
@@ -613,6 +630,65 @@ public class IsCommand {
                                 })
                 ))
 
+                // /is member kick <member>
+                .withSubcommand(createSubCommand("member kick <member>", "Üyeyi adadan çıkarın.",
+                        new CommandAPICommand("member")
+                                .withSubcommand(
+                                        new CommandAPICommand("kick")
+                                                .withArguments(new StringArgument("member"))
+                                                .executesPlayer((player, args) -> {
+                                                    String memberName = (String) args.get("member");
+
+                                                    Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
+                                                    if (island == null) {
+                                                        player.sendMessage(msg.getMessage("island.no-island"));
+                                                        return;
+                                                    }
+
+                                                    @SuppressWarnings("deprecation")
+                                                    OfflinePlayer target = Bukkit.getOfflinePlayer(memberName);
+                                                    UUID targetUuid = target.getUniqueId();
+
+                                                    if (targetUuid.equals(island.getOwnerUUID())) {
+                                                        player.sendMessage(msg.getMessage("members.cannot-kick-owner"));
+                                                        return;
+                                                    }
+
+                                                    if (!island.getMemberRoles().containsKey(targetUuid)) {
+                                                        player.sendMessage(msg.getMessage("members.not-a-member"));
+                                                        return;
+                                                    }
+
+                                                    if (!island.hasPermission(player.getUniqueId(), IslandPermissions.KICK.getNode())) {
+                                                        player.sendMessage(msg.getMessage("general.no-permission"));
+                                                        return;
+                                                    }
+
+                                                    int actorTier = island.getRoleTier(player.getUniqueId());
+                                                    int targetTier = island.getRoleTier(targetUuid);
+                                                    if (targetTier <= actorTier) {
+                                                        player.sendMessage(msg.getMessage("members.cannot-kick-higher-rank"));
+                                                        return;
+                                                    }
+
+                                                    island.removeMember(targetUuid);
+
+                                                    String targetName = target.getName() != null ? target.getName() : memberName;
+                                                    player.sendMessage(msg.getMessage("members.kick-success").replace("{target}", targetName));
+
+                                                    Player targetOnline = target.getPlayer();
+                                                    if (targetOnline != null && targetOnline.isOnline()) {
+                                                        targetOnline.sendMessage(msg.getMessage("members.kicked-notify"));
+                                                        if (island.isWithinBounds(targetOnline.getLocation())) {
+                                                            targetOnline.setFallDistance(0);
+                                                            BorderManager.removeBorder(targetOnline);
+                                                            targetOnline.teleport(Bukkit.getWorlds().get(0).getSpawnLocation());
+                                                        }
+                                                    }
+                                                })
+                                )
+                ))
+
                 // ADMIN COMMANDS
 
                 // /is set level <player> <amount>
@@ -627,7 +703,7 @@ public class IsCommand {
                                                     Player target = (Player) args.get("target");
                                                     int amount = (int) args.get("amount");
 
-                                                    Island targetIsland = plugin.getIslandManager().getIsland(target.getUniqueId());
+                                                    Island targetIsland = plugin.getIslandManager().getIslandByMember(target.getUniqueId());
                                                     if (targetIsland == null) {
                                                         player.sendMessage(msg.getMessage("admin.target-no-island").replace("{target}", target.getName()));
                                                         return;
@@ -658,7 +734,7 @@ public class IsCommand {
                                                     Player target = (Player) args.get("target");
                                                     int amount = (int) args.get("amount");
 
-                                                    Island targetIsland = plugin.getIslandManager().getIsland(target.getUniqueId());
+                                                    Island targetIsland = plugin.getIslandManager().getIslandByMember(target.getUniqueId());
                                                     if (targetIsland == null) {
                                                         player.sendMessage(msg.getMessage("admin.target-no-island").replace("{target}", target.getName()));
                                                         return;
@@ -693,7 +769,7 @@ public class IsCommand {
     }
 
     public static void teleportToIsland(SkyblockCore plugin, Player player) {
-        Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
+        Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
         if (island != null && island.getSpawnLocation() != null) {
             player.setFallDistance(0);
             player.teleport(island.getSpawnLocation());
@@ -789,7 +865,7 @@ public class IsCommand {
 
         @SuppressWarnings("deprecation")
         OfflinePlayer targetOwner = Bukkit.getOfflinePlayer(targetName);
-        Island island = plugin.getIslandManager().getIsland(targetOwner.getUniqueId());
+        Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
 
         if (island == null) {
             player.sendMessage(msg.getMessage("general.player-not-found"));
@@ -797,6 +873,10 @@ public class IsCommand {
         }
         if (warpName == null || warpName.isEmpty()) {
             WarpMenu.openVisitorWarpMenu(player, targetName);
+            return;
+        }
+        if (island.isBanned(player.getUniqueId()) && !player.isOp()) {
+            player.sendMessage(msg.getMessage("island.banned"));
             return;
         }
         if (island.isLocked() && !player.isOp()) {
@@ -830,7 +910,7 @@ public class IsCommand {
     }
 
     private static void teleportOutFromIsland(SkyblockCore plugin, Player player) {
-        Island playerIsland = plugin.getIslandManager().getIsland(player.getUniqueId());
+        Island playerIsland = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
         player.setFallDistance(0);
         BorderManager.removeBorder(player);
 

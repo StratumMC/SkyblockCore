@@ -104,7 +104,7 @@ public class PermissionsMenu implements Listener {
         if (event.getCurrentItem() == null || event.getCurrentItem().getType() == Material.AIR) return;
 
         int slot = event.getSlot();
-        Island island = SkyblockCore.getInstance().getIslandManager().getIsland(player.getUniqueId());
+        Island island = SkyblockCore.getInstance().getIslandManager().getIslandByMember(player.getUniqueId());
         if (island == null) return;
 
         if (GuiUtils.isNavigationSlot(slot)) {

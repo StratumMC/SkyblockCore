@@ -7,7 +7,14 @@ import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.StringArgument;
 import dev.jorel.commandapi.arguments.GreedyStringArgument;
 
+import java.util.regex.Pattern;
+
 public class RegisterCommand {
+
+    // example@example.com örnegı harıcı kjabul etmiyor artık
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(
+            "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+    );
 
     public static void registerCommand(SkyblockCore plugin) {
         MessageManager msg = plugin.getMessageManager();
@@ -24,7 +31,7 @@ public class RegisterCommand {
                     String password = (String) args.get("password");
                     String email = (String) args.get("email");
 
-                    if (!email.contains("@") || !email.contains(".")) {
+                    if (!EMAIL_PATTERN.matcher(email).matches()) {
                         player.sendMessage(msg.getMessage("auth.invalid-email"));
                         return;
                     }
