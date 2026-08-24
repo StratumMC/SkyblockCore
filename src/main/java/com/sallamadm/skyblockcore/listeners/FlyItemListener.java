@@ -39,6 +39,7 @@ public class FlyItemListener implements Listener {
 
         long seconds = meta.getPersistentDataContainer().get(FlyItem.REWARD_KEY, PersistentDataType.LONG);
         plugin.getFlightManager().addSeconds(player.getUniqueId(), seconds);
+        plugin.getScoreboardManager().updateScoreboard(player);
 
         if (item.getAmount() > 1) {
             item.setAmount(item.getAmount() - 1);

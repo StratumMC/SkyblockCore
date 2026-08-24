@@ -851,6 +851,9 @@ public class IsCommand {
         island.setSpawnLocation(spawnLocation);
         player.setBedSpawnLocation(spawnLocation, true);
         player.teleport(spawnLocation);
+
+        Block bedrockBlock = world.getBlockAt(spawnLocation.getBlockX(), spawnLocation.getBlockY() - 4, spawnLocation.getBlockZ());
+        bedrockBlock.setType(Material.BEDROCK);
         SkyblockCore.getInstance().getDataManager().saveData();
     }
 

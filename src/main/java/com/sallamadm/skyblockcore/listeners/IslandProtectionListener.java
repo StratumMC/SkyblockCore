@@ -5,6 +5,7 @@ import com.sallamadm.skyblockcore.config.MessageManager;
 import com.sallamadm.skyblockcore.island.Island;
 import com.sallamadm.skyblockcore.island.enums.IslandPermissions;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -70,7 +71,62 @@ public class IslandProtectionListener implements Listener {
         if (!hasIslandPermission(event.getPlayer(), event.getBlock().getLocation(), IslandPermissions.BLOCK_BREAK)) {
             event.setCancelled(true);
             event.getPlayer().sendMessage(msg.getMessage("protection.cannot-build"));
+            return;
         }
+
+        new org.bukkit.scheduler.BukkitRunnable() {
+            @Override
+            public void run() {
+                Location loc = event.getBlock().getLocation();
+                Island island = getIslandAt(loc);
+                if (island == null) return;
+                Location center = island.getCenterLocation();
+                if (center == null || center.getWorld() == null) return;
+
+                org.bukkit.World world = center.getWorld();
+                int radius = island.getIslandSize() / 2;
+                int minX = center.getBlockX() - radius;
+                int maxX = center.getBlockX() + radius;
+                int minZ = center.getBlockZ() - radius;
+                int maxZ = center.getBlockZ() + radius;
+                int centerY = center.getBlockY();
+                int minY = Math.max(world.getMinHeight(), centerY - 10);
+                int maxY = Math.min(world.getMaxHeight(), centerY + 10);
+
+
+                boolean foundNonBedrock = false;
+                outer:
+                for (int x = minX; x <= maxX; x++) {
+                    for (int z = minZ; z <= maxZ; z++) {
+                        for (int y = minY; y <= maxY; y++) {
+                            Block b = world.getBlockAt(x, y, z);
+                            if (b.getType() != Material.AIR && b.getType() != Material.BEDROCK) {
+                                foundNonBedrock = true;
+                                break outer;
+                            }
+                        }
+                    }
+                }
+
+                if (!foundNonBedrock) {
+                    for (int x = minX; x <= maxX; x++) {
+                        for (int z = minZ; z <= maxZ; z++) {
+                            for (int y = minY; y <= maxY; y++) {
+                                Block b = world.getBlockAt(x, y, z);
+                                if (b.getType() == Material.BEDROCK) {
+                                    Location spawn = new Location(world, b.getX() + 0.5, b.getY() + 1.0, b.getZ() + 0.5, 0f, 0f);
+                                    island.setSpawnLocation(spawn);
+                                    SkyblockCore.getInstance().getDataManager().saveData();
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    return;
+                }
+            }
+        }.runTaskLater(plugin, 20L);
     }
 
     @EventHandler(priority = EventPriority.HIGH)
