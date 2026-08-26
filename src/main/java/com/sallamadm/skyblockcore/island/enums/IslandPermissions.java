@@ -19,7 +19,11 @@ public enum IslandPermissions {
     LOCK_ISLAND("island.lock", "Ada Kilitleme", Material.TRIPWIRE_HOOK),
     INVITE("island.invite", "Davet Etme", Material.PAPER),
     MANAGE_ROLES("island.manageroles", "Rol Yönetimi", Material.MINECART),
+    MANAGE_GAMERULES("island.managegamerules", "Gamerule Yönetimi", Material.COMMAND_BLOCK),
     FLY("island.fly", "Uçuş İzni", Material.FEATHER);
+    /* aklınıza gelen diğer rol izinlerini buraya ekleyin
+     * ust kısma ekleme yapabilirsiniz yada buraya yazın ben eklerim.
+     */
 
     private final String node;
     private final String displayName;

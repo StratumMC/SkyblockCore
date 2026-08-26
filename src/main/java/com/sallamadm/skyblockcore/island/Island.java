@@ -1,6 +1,7 @@
 package com.sallamadm.skyblockcore.island;
 
 import com.sallamadm.skyblockcore.SkyblockCore;
+import com.sallamadm.skyblockcore.island.enums.IslandGamerules;
 import com.sallamadm.skyblockcore.island.enums.IslandPermissions;
 import com.sallamadm.skyblockcore.island.enums.IslandRole;
 import org.bukkit.Location;
@@ -27,6 +28,7 @@ public class Island {
     private final Map<Integer, Set<String>> permissionCache = new HashMap<>();
     private final Map<UUID, Integer> memberRoles = new HashMap<>();
     private final Map<UUID, UUID> coopAddedBy = new HashMap<>();
+    private final Map<String, Boolean> gameruleCache = new HashMap<>();
 
 
     public Island(UUID ownerUUID) {
@@ -278,6 +280,29 @@ public class Island {
 
         return loc.getBlockX() >= minX && loc.getBlockX() <= maxX &&
                 loc.getBlockZ() >= minZ && loc.getBlockZ() <= maxZ;
+    }
+
+    public boolean getGamerule(String node) {
+        Boolean value = gameruleCache.get(node);
+        if (value != null) return value;
+        IslandGamerules rule = IslandGamerules.fromNode(node);
+        return rule != null && rule.getDefaultValue();
+    }
+
+    public void setGamerule(String node, boolean value) {
+        gameruleCache.put(node, value);
+        if (islandUuid != null) {
+            SkyblockCore.getInstance().getDataManager().setGameruleAsync(islandUuid, node, value);
+        }
+    }
+
+    public Map<String, Boolean> getGameruleCache() {
+        return gameruleCache;
+    }
+
+    public void setGameruleCache(Map<String, Boolean> cache) {
+        this.gameruleCache.clear();
+        this.gameruleCache.putAll(cache);
     }
 
 }

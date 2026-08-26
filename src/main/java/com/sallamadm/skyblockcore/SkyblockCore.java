@@ -79,6 +79,7 @@ public final class SkyblockCore extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new IslandDeleteMenu(), this);
         getServer().getPluginManager().registerEvents(new PermissionsMenu(), this);
         getServer().getPluginManager().registerEvents(new MembersMenu(), this);
+        getServer().getPluginManager().registerEvents(new GameruleMenu(), this);
 
         getLogger().info("Skyblock Core is now activated.");
     }

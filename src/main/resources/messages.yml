@@ -99,6 +99,9 @@ permissions:
   cannot-grant-unowned: "&cKendinde olmayan bir yetkiyi başkasına veremezsin!"
   updated: "&e{role}&a rolünün &e{permission}&a yetkisi &e{status}&a olarak ayarlandı."
 
+gamerule:
+  updated: "&e{gamerule}&a ayarı &e{status}&a olarak değiştirildi."
+
 members:
   owner-cannot-change: "&cAda sahibinin rolü değiştirilemez!"
   cannot-edit-coop: "&cBu rol buradan değiştirilemez, /is coop komutunu kullanın!"

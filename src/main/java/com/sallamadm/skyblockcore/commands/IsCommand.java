@@ -510,6 +510,23 @@ public class IsCommand {
                                 })
                 ))
 
+                // /is gamerules
+                .withSubcommand(createSubCommand("gamerules", "Ada gamerule ayarlarınızı düzenleyin.",
+                        new CommandAPICommand("gamerules")
+                                .executesPlayer((player, args) -> {
+                                    Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
+                                    if (island == null) {
+                                        player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+                                    if (!island.hasPermission(player.getUniqueId(), IslandPermissions.MANAGE_GAMERULES.getNode())) {
+                                        player.sendMessage(msg.getMessage("general.no-permission"));
+                                        return;
+                                    }
+                                    GameruleMenu.openGameruleMenu(player, island);
+                                })
+                ))
+
                 // /is invite <target>
                 .withSubcommand(createSubCommand("invite <target>", "Adanıza oyuncu davet edin.",
                         new CommandAPICommand("invite")

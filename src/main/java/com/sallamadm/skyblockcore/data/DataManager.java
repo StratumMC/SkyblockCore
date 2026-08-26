@@ -117,6 +117,13 @@ public class DataManager {
                     "PRIMARY KEY (island_uuid, player_uuid), " +
                     "FOREIGN KEY (island_uuid) REFERENCES sb_islands(island_uuid) ON DELETE CASCADE)");
 
+            statement.execute("CREATE TABLE IF NOT EXISTS sb_island_gamerules (" +
+                    "island_uuid VARCHAR(36) NOT NULL, " +
+                    "gamerule_node VARCHAR(64) NOT NULL, " +
+                    "value BOOLEAN NOT NULL, " +
+                    "PRIMARY KEY (island_uuid, gamerule_node), " +
+                    "FOREIGN KEY (island_uuid) REFERENCES sb_islands(island_uuid) ON DELETE CASCADE)");
+
             statement.execute("CREATE TABLE IF NOT EXISTS sb_accounts (" +
                     "username VARCHAR(32) PRIMARY KEY, " +
                     "uuid VARCHAR(36) DEFAULT NULL, " +
@@ -382,6 +389,35 @@ public class DataManager {
         return result;
     }
 
+    public void setGameruleAsync(String islandUuid, String node, boolean value) {
+        if (connection == null || islandUuid == null) return;
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            String sql = "REPLACE INTO sb_island_gamerules (island_uuid, gamerule_node, value) VALUES (?, ?, ?)";
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                ps.setString(1, islandUuid);
+                ps.setString(2, node);
+                ps.setBoolean(3, value);
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private Map<String, Boolean> loadGamerulesSync(String islandUuid) throws SQLException {
+        Map<String, Boolean> result = new HashMap<>();
+        String sql = "SELECT gamerule_node, value FROM sb_island_gamerules WHERE island_uuid = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, islandUuid);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    result.put(rs.getString("gamerule_node"), rs.getBoolean("value"));
+                }
+            }
+        }
+        return result;
+    }
+
     public void saveMemberAsync(String islandUuid, UUID playerUuid, int roleTier, UUID addedBy) {
         if (connection == null || islandUuid == null) return;
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
@@ -480,6 +516,7 @@ public class DataManager {
                     }
 
                     island.setPermissionCache(loadPermissionsSync(island.getIslandUuid()));
+                    island.setGameruleCache(loadGamerulesSync(island.getIslandUuid()));
                     loadMembersSync(island, island.getIslandUuid());
                     island.seedDefaultPermissionsIfEmpty();
                 }

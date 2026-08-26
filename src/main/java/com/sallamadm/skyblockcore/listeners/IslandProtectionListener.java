@@ -3,18 +3,27 @@ package com.sallamadm.skyblockcore.listeners;
 import com.sallamadm.skyblockcore.SkyblockCore;
 import com.sallamadm.skyblockcore.config.MessageManager;
 import com.sallamadm.skyblockcore.island.Island;
+import com.sallamadm.skyblockcore.island.enums.IslandGamerules;
 import com.sallamadm.skyblockcore.island.enums.IslandPermissions;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Animals;
+import org.bukkit.entity.Creeper;
+import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.TNTPrimed;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.BlockSpreadEvent;
+import org.bukkit.event.block.LeavesDecayEvent;
+import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.InventoryHolder;
@@ -64,6 +73,15 @@ public class IslandProtectionListener implements Listener {
             }
         }
         return null;
+    }
+
+    private boolean isGameruleEnabledAt(Location location, IslandGamerules rule) {
+        if (!isProtectedWorld(location)) return true;
+
+        Island island = getIslandAt(location);
+        if (island == null) return true;
+
+        return island.getGamerule(rule.getNode());
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -183,6 +201,73 @@ public class IslandProtectionListener implements Listener {
             if (island != null && !island.getOwnerUUID().equals(targetPlayer.getUniqueId())) {
                 event.setCancelled(true);
             }
+        }
+    }
+
+    // island gamerule kısmı
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onEntityExplode(EntityExplodeEvent event) {
+        Location loc = event.getLocation();
+
+        if (event.getEntity() instanceof Creeper) {
+            if (!isGameruleEnabledAt(loc, IslandGamerules.CREEPER_EXPLOSION)) {
+                event.blockList().clear();
+                event.setCancelled(true);
+            }
+            return;
+        }
+
+        if (event.getEntity() instanceof TNTPrimed) {
+            if (!isGameruleEnabledAt(loc, IslandGamerules.TNT_EXPLOSION)) {
+                event.blockList().clear();
+                event.setCancelled(true);
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onCreatureSpawn(CreatureSpawnEvent event) {
+        switch (event.getSpawnReason()) {
+            case SPAWNER_EGG:
+            case EGG:
+            case BREEDING:
+            case CUSTOM:
+            case COMMAND:
+                return;
+            default:
+                break;
+        }
+
+        Location loc = event.getLocation();
+
+        if (event.getEntity() instanceof Monster) {
+            if (!isGameruleEnabledAt(loc, IslandGamerules.HARMFUL_MOB_SPAWN)) {
+                event.setCancelled(true);
+            }
+            return;
+        }
+
+        if (event.getEntity() instanceof Animals) {
+            if (!isGameruleEnabledAt(loc, IslandGamerules.HARMLESS_MOB_SPAWN)) {
+                event.setCancelled(true);
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onBlockSpread(BlockSpreadEvent event) {
+        if (event.getSource().getType() != Material.FIRE) return;
+
+        if (!isGameruleEnabledAt(event.getBlock().getLocation(), IslandGamerules.FIRE_SPREAD)) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onLeavesDecay(LeavesDecayEvent event) {
+        if (!isGameruleEnabledAt(event.getBlock().getLocation(), IslandGamerules.LEAF_DECAY)) {
+            event.setCancelled(true);
         }
     }
 }
