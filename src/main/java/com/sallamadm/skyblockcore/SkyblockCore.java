@@ -9,6 +9,7 @@ import com.sallamadm.skyblockcore.island.InviteManager;
 import com.sallamadm.skyblockcore.island.IslandManager;
 import com.sallamadm.skyblockcore.listeners.*;
 import com.sallamadm.skyblockcore.scoreboard.ScoreboardManager;
+import com.sallamadm.skyblockcore.island.IslandWeatherManager;
 import com.sallamadm.skyblockcore.world.WorldManager;
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIBukkitConfig;
@@ -80,6 +81,9 @@ public final class SkyblockCore extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PermissionsMenu(), this);
         getServer().getPluginManager().registerEvents(new MembersMenu(), this);
         getServer().getPluginManager().registerEvents(new GameruleMenu(), this);
+        getServer().getPluginManager().registerEvents(new WeatherMenu(), this);
+
+        IslandWeatherManager.startThunderEffectTask(this);
 
         getLogger().info("Skyblock Core is now activated.");
     }

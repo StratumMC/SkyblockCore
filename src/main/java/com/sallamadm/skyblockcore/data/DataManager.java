@@ -124,6 +124,11 @@ public class DataManager {
                     "PRIMARY KEY (island_uuid, gamerule_node), " +
                     "FOREIGN KEY (island_uuid) REFERENCES sb_islands(island_uuid) ON DELETE CASCADE)");
 
+            statement.execute("CREATE TABLE IF NOT EXISTS sb_island_weather (" +
+                    "island_uuid VARCHAR(36) PRIMARY KEY, " +
+                    "weather_option VARCHAR(32) NOT NULL, " +
+                    "FOREIGN KEY (island_uuid) REFERENCES sb_islands(island_uuid) ON DELETE CASCADE)");
+
             statement.execute("CREATE TABLE IF NOT EXISTS sb_accounts (" +
                     "username VARCHAR(32) PRIMARY KEY, " +
                     "uuid VARCHAR(36) DEFAULT NULL, " +
@@ -418,6 +423,31 @@ public class DataManager {
         return result;
     }
 
+    public void setWeatherOptionAsync(String islandUuid, String node) {
+        if (connection == null || islandUuid == null) return;
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            String sql = "REPLACE INTO sb_island_weather (island_uuid, weather_option) VALUES (?, ?)";
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                ps.setString(1, islandUuid);
+                ps.setString(2, node);
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private String loadWeatherOptionSync(String islandUuid) throws SQLException {
+        String sql = "SELECT weather_option FROM sb_island_weather WHERE island_uuid = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, islandUuid);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getString("weather_option");
+            }
+        }
+        return null;
+    }
+
     public void saveMemberAsync(String islandUuid, UUID playerUuid, int roleTier, UUID addedBy) {
         if (connection == null || islandUuid == null) return;
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
@@ -517,6 +547,10 @@ public class DataManager {
 
                     island.setPermissionCache(loadPermissionsSync(island.getIslandUuid()));
                     island.setGameruleCache(loadGamerulesSync(island.getIslandUuid()));
+                    String savedWeather = loadWeatherOptionSync(island.getIslandUuid());
+                    if (savedWeather != null) {
+                        island.setWeatherOption(savedWeather);
+                    }
                     loadMembersSync(island, island.getIslandUuid());
                     island.seedDefaultPermissionsIfEmpty();
                 }

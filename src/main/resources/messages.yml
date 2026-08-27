@@ -102,6 +102,9 @@ permissions:
 gamerule:
   updated: "&e{gamerule}&a ayarı &e{status}&a olarak değiştirildi."
 
+weather:
+  updated: "&aAda hava durumu &e{weather}&a olarak ayarlandı."
+
 members:
   owner-cannot-change: "&cAda sahibinin rolü değiştirilemez!"
   cannot-edit-coop: "&cBu rol buradan değiştirilemez, /is coop komutunu kullanın!"

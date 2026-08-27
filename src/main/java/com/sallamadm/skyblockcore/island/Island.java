@@ -4,6 +4,7 @@ import com.sallamadm.skyblockcore.SkyblockCore;
 import com.sallamadm.skyblockcore.island.enums.IslandGamerules;
 import com.sallamadm.skyblockcore.island.enums.IslandPermissions;
 import com.sallamadm.skyblockcore.island.enums.IslandRole;
+import com.sallamadm.skyblockcore.island.enums.IslandWeather;
 import org.bukkit.Location;
 import org.bukkit.block.Biome;
 
@@ -29,6 +30,7 @@ public class Island {
     private final Map<UUID, Integer> memberRoles = new HashMap<>();
     private final Map<UUID, UUID> coopAddedBy = new HashMap<>();
     private final Map<String, Boolean> gameruleCache = new HashMap<>();
+    private String weatherOption = IslandWeather.NORMAL.getNode();
 
 
     public Island(UUID ownerUUID) {
@@ -282,6 +284,8 @@ public class Island {
                 loc.getBlockZ() >= minZ && loc.getBlockZ() <= maxZ;
     }
 
+    // gamerule
+
     public boolean getGamerule(String node) {
         Boolean value = gameruleCache.get(node);
         if (value != null) return value;
@@ -303,6 +307,21 @@ public class Island {
     public void setGameruleCache(Map<String, Boolean> cache) {
         this.gameruleCache.clear();
         this.gameruleCache.putAll(cache);
+    }
+
+    // hava drumları
+
+    public String getWeatherOption() {
+        return weatherOption;
+    }
+
+    public void setWeatherOption(String node) {
+        this.weatherOption = node;
+        if (islandUuid != null && SkyblockCore.getInstance() != null
+                && SkyblockCore.getInstance().getDataManager() != null
+                && !SkyblockCore.getInstance().getDataManager().isLoading()) {
+            SkyblockCore.getInstance().getDataManager().setWeatherOptionAsync(islandUuid, node);
+        }
     }
 
 }

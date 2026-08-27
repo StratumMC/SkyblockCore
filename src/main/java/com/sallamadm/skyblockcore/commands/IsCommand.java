@@ -527,6 +527,23 @@ public class IsCommand {
                                 })
                 ))
 
+                // /is weather
+                .withSubcommand(createSubCommand("weather", "Ada hava durumu/zaman ayarlarınızı düzenleyin.",
+                        new CommandAPICommand("weather")
+                                .executesPlayer((player, args) -> {
+                                    Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
+                                    if (island == null) {
+                                        player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+                                    if (!island.hasPermission(player.getUniqueId(), IslandPermissions.MANAGE_WEATHER.getNode())) {
+                                        player.sendMessage(msg.getMessage("general.no-permission"));
+                                        return;
+                                    }
+                                    WeatherMenu.openWeatherMenu(player, island);
+                                })
+                ))
+
                 // /is invite <target>
                 .withSubcommand(createSubCommand("invite <target>", "Adanıza oyuncu davet edin.",
                         new CommandAPICommand("invite")

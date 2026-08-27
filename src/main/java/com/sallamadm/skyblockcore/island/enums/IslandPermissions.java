@@ -20,10 +20,8 @@ public enum IslandPermissions {
     INVITE("island.invite", "Davet Etme", Material.PAPER),
     MANAGE_ROLES("island.manageroles", "Rol Yönetimi", Material.MINECART),
     MANAGE_GAMERULES("island.managegamerules", "Gamerule Yönetimi", Material.COMMAND_BLOCK),
+    MANAGE_WEATHER("island.manageweather", "Hava Durumu Yönetimi", Material.SUNFLOWER),
     FLY("island.fly", "Uçuş İzni", Material.FEATHER);
-    /* aklınıza gelen diğer rol izinlerini buraya ekleyin
-     * ust kısma ekleme yapabilirsiniz yada buraya yazın ben eklerim.
-     */
 
     private final String node;
     private final String displayName;
@@ -58,6 +56,7 @@ public enum IslandPermissions {
                 mod.remove(BAN.getNode());
                 mod.remove(UNBAN.getNode());
                 mod.remove(SET_SPAWN.getNode());
+                mod.remove(MANAGE_GAMERULES.getNode());
                 return mod;
             }
 

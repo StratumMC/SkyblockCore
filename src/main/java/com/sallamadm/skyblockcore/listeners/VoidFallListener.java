@@ -2,12 +2,14 @@ package com.sallamadm.skyblockcore.listeners;
 
 import com.sallamadm.skyblockcore.SkyblockCore;
 import com.sallamadm.skyblockcore.island.Island;
+import com.sallamadm.skyblockcore.island.IslandWeatherManager;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 public class VoidFallListener implements Listener {
 
@@ -30,6 +32,11 @@ public class VoidFallListener implements Listener {
                 player.setFallDistance(0);
                 player.teleport(Bukkit.getWorlds().get(0).getSpawnLocation());
             }
+            return;
+        }
+
+        if (event.hasChangedBlock()) {
+            IslandWeatherManager.handleMove(plugin, player, event.getTo());
         }
     }
 
@@ -42,5 +49,10 @@ public class VoidFallListener implements Listener {
                 }
             }
         }
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        IslandWeatherManager.clearPlayer(event.getPlayer());
     }
 }
