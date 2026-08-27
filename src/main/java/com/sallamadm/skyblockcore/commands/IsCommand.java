@@ -405,9 +405,9 @@ public class IsCommand {
                                 })
                 ))
 
-                // /is toplikes <hafta/ay/hepsi>
-                .withSubcommand(createSubCommand("toplikes <hafta/ay/hepsi>", "En çok beğeni alan adaları görün.",
-                        new CommandAPICommand("toplikes")
+                // /is liketop <hafta/ay/hepsi>
+                .withSubcommand(createSubCommand("liketop <hafta/ay/hepsi>", "En çok beğeni alan adaları görün.",
+                        new CommandAPICommand("liketop")
                                 .withArguments(new StringArgument("period"))
                                 .executesPlayer((player, args) -> {
                                     String period = ((String) args.get("period")).toLowerCase(Locale.ROOT);
