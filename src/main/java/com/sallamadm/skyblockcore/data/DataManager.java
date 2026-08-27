@@ -438,6 +438,20 @@ public class DataManager {
         return ratings;
     }
 
+    public Map<String, Double> getTopLeveledIslands() {
+        if (connection == null) return Collections.emptyMap();
+        Map<String, Double> levels = new LinkedHashMap<>();
+        String sql = "SELECT island_uuid, island_level FROM sb_islands ORDER BY island_level DESC LIMIT 10";
+        try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                levels.put(rs.getString("island_uuid"), rs.getDouble("island_level"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return levels;
+    }
+
     public int getWeeklyLikeCount(String islandUuid) {
         LocalDate today = LocalDate.now();
         WeekFields weekFields = WeekFields.ISO;
@@ -456,8 +470,12 @@ public class DataManager {
     private int getLikeCount(String islandUuid, String periodColumn, String periodKey) {
         if (connection == null || islandUuid == null) return 0;
 
-        String sql = "SELECT COUNT(*) FROM sb_island_likes WHERE island_uuid = ?" +
-                (periodColumn != null ? " AND " + periodColumn + " = ?" : "");
+        String sql;
+        if (periodColumn != null) {
+            sql = "SELECT COUNT(DISTINCT voter_uuid) FROM sb_island_likes WHERE island_uuid = ? AND " + periodColumn + " = ?";
+        } else {
+            sql = "SELECT COUNT(DISTINCT voter_uuid) FROM sb_island_likes WHERE island_uuid = ?";
+        }
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, islandUuid);
             if (periodColumn != null) ps.setString(2, periodKey);
@@ -486,9 +504,12 @@ public class DataManager {
         }
 
         Map<String, Integer> likes = new LinkedHashMap<>();
-        String sql = "SELECT island_uuid, COUNT(*) AS likes FROM sb_island_likes" +
-                (periodColumn != null ? " WHERE " + periodColumn + " = ?" : "") +
-                " GROUP BY island_uuid ORDER BY likes DESC LIMIT 10";
+        String sql;
+        if (periodColumn != null) {
+            sql = "SELECT island_uuid, COUNT(DISTINCT voter_uuid) AS likes FROM sb_island_likes WHERE " + periodColumn + " = ? GROUP BY island_uuid ORDER BY likes DESC LIMIT 10";
+        } else {
+            sql = "SELECT island_uuid, COUNT(DISTINCT voter_uuid) AS likes FROM sb_island_likes GROUP BY island_uuid ORDER BY likes DESC LIMIT 10";
+        }
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             if (periodColumn != null) ps.setString(1, periodKey);
             try (ResultSet rs = ps.executeQuery()) {

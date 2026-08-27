@@ -80,6 +80,32 @@ public class IsCommand {
                                 })
                 ))
 
+                // /is leveltop
+                .withSubcommand(createSubCommand("leveltop", "En yüksek levelli adaları görün.",
+                        new CommandAPICommand("leveltop")
+                                .executesPlayer((player, args) -> {
+                                    Map<String, Double> topLevels = plugin.getDataManager().getTopLeveledIslands();
+                                    player.sendMessage(ChatColor.GOLD + "========== [ ADA LEVEL SIRALAMASI ] ==========");
+                                    if (topLevels.isEmpty()) {
+                                        player.sendMessage(msg.getMessage("level.no-levels"));
+                                    } else {
+                                        int rank = 1;
+                                        for (Map.Entry<String, Double> entry : topLevels.entrySet()) {
+                                            Island island = plugin.getIslandManager().getAllIslands().values().stream()
+                                                    .filter(currentIsland -> currentIsland.getIslandUuid().equals(entry.getKey()))
+                                                    .findFirst()
+                                                    .orElse(null);
+                                            if (island != null) {
+                                                player.sendMessage(ChatColor.YELLOW + "#" + rank + ChatColor.GRAY + " " + island.getIslandName()
+                                                        + ChatColor.GREEN + " - " + String.format(Locale.US, "%.2f", entry.getValue()));
+                                                rank++;
+                                            }
+                                        }
+                                    }
+                                    player.sendMessage(ChatColor.GOLD + "===============================================");
+                                })
+                ))
+
                 // /is setname <name>
                 .withSubcommand(createSubCommand("setname <name>", "Adanızın adını değiştirin.",
                         new CommandAPICommand("setname")

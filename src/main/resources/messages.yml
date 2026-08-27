@@ -157,6 +157,9 @@ invite:
   accepted-notify-inviter: "&e{target} &adavetini kabul etti ve adana katıldı!"
   rejected: "&eDaveti reddettin."
   rejected-notify-inviter: "&e{target} &adavetini reddetti."
+
+level:
+  no-levels: "&eHenüz leveli olan ada yok."
 #upgrades:
 # success: "&aSuccessfully upgraded!" secret update sssh!
 #not-enough-money: "&cYou don't have enough money for this upgrade!"
