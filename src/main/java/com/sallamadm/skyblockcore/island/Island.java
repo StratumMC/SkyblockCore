@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 public class Island {
     private UUID ownerUUID;
     private String islandUuid;
-    private int level;
+    private double level;
     private int gridIndex;
     private Location centerLocation;
     private Location spawnLocation;
@@ -70,15 +70,15 @@ public class Island {
         this.islandUuid = islandUuid;
     }
 
-    public int getLevel() {
+    public double getLevel() {
         return level;
     }
-    public void setLevel(int level) {
+    public void setLevel(double level) {
         this.level = level;
         autoSave();
     }
-    public void addLevel(int level) {
-        this.level += level;
+    public void addLevel(double level) {
+        this.level = Math.max(0D, this.level + level);
         autoSave();
     }
 

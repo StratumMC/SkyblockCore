@@ -140,6 +140,10 @@ members:
   kicked-notify: "&cAdadan atıldınız!"
   kick-success: "&e{target}&a adlı oyuncu adadan atıldı."
 
+webconnect:
+  success: "&aWeb bağlantısı başarıyla kuruldu!"
+  failure: "&cWeb bağlantısı kurulamadı! Lütfen web panelinde kodu girdiğinden emin ol."
+
 invite:
   cannot-invite-self: "&cKendini davet edemezsin!"
   target-has-island: "&c{target} adlı oyuncunun zaten bir adası var!"

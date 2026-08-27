@@ -63,6 +63,7 @@ public final class SkyblockCore extends JavaPlugin {
         LoginCommand.registerCommand(this);
         FlyCommand.registerCommand(this);
         FlyItemCommand.registerCommand(this);
+        WebConnectCommand.registerCommand(this);
 
 
         getServer().getPluginManager().registerEvents(new JoinListener(this), this);
@@ -71,6 +72,7 @@ public final class SkyblockCore extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new IslandProtectionListener(this), this);
         getServer().getPluginManager().registerEvents(new AuthListener(this), this);
         getServer().getPluginManager().registerEvents(new FlyItemListener(this), this);
+        getServer().getPluginManager().registerEvents(new BlockLevelListener(this), this);
         getServer().getPluginManager().registerEvents(flightManager, this);
 
         //guis

@@ -90,7 +90,7 @@ public class DataManager {
                     "island_uuid VARCHAR(36) UNIQUE, " +
                     "grid_index INT NOT NULL, " +
                     "island_size INT NOT NULL, " +
-                    "island_level INT NOT NULL, " +
+                    "island_level DOUBLE NOT NULL, " +
                     "island_name VARCHAR(64), " +
                     "is_locked BOOLEAN, " +
                     "biome VARCHAR(32), " +
@@ -171,11 +171,68 @@ public class DataManager {
                     "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
                     "credit INT DEFAULT 0, " +
                     "fly_seconds BIGINT NOT NULL DEFAULT 0)");
+
+
+            statement.execute("ALTER TABLE sb_islands MODIFY island_level DOUBLE NOT NULL");
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
+
+    private String normalizeLinkCode(String inputCode) {
+        if (inputCode == null) return null;
+
+        String normalizedCode = inputCode.trim();
+        if (normalizedCode.isEmpty()) return null;
+
+        normalizedCode = normalizedCode.toUpperCase(Locale.ROOT);
+        if (normalizedCode.startsWith("STRATUM-")) {
+            normalizedCode = normalizedCode.substring("STRATUM-".length());
+        }
+
+        if (normalizedCode.length() != 8) return null;
+        return "STRATUM-" + normalizedCode;
+    }
+
+    public boolean consumeMinecraftLinkCode(UUID playerUuid, String username, String inputCode) {
+        if (connection == null || playerUuid == null || username == null) return false;
+
+        String normalizedCode = normalizeLinkCode(inputCode);
+        if (normalizedCode == null) return false;
+
+        String selectSql = "SELECT stratum_id FROM stratum_minecraft_link_codes WHERE code = ? LIMIT 1";
+        try (PreparedStatement selectStatement = connection.prepareStatement(selectSql)) {
+            selectStatement.setString(1, normalizedCode);
+            try (ResultSet rs = selectStatement.executeQuery()) {
+                if (!rs.next()) {
+                    return false;
+                }
+
+                String stratumId = rs.getString("stratum_id");
+
+                String insertSql = "INSERT INTO stratum_identities (stratum_id, provider, provider_user_id, provider_username, created_at) VALUES (?, ?, ?, ?, CURRENT_DATE)";
+                try (PreparedStatement insertStatement = connection.prepareStatement(insertSql)) {
+                    insertStatement.setString(1, stratumId);
+                    insertStatement.setString(2, "minecraft");
+                    insertStatement.setString(3, playerUuid.toString());
+                    insertStatement.setString(4, username);
+                    insertStatement.executeUpdate();
+                }
+
+                String deleteSql = "DELETE FROM stratum_minecraft_link_codes WHERE code = ?";
+                try (PreparedStatement deleteStatement = connection.prepareStatement(deleteSql)) {
+                    deleteStatement.setString(1, normalizedCode);
+                    deleteStatement.executeUpdate();
+                }
+
+                return true;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 
     public void updateUuid(String username, UUID uuid) {
         if (connection == null) return;
@@ -502,7 +559,7 @@ public class DataManager {
             ps.setString(2, island.getIslandUuid());
             ps.setInt(3, island.getGridIndex());
             ps.setInt(4, island.getIslandSize());
-            ps.setInt(5, island.getLevel());
+            ps.setDouble(5, island.getLevel());
             ps.setString(6, island.getIslandName());
             ps.setBoolean(7, island.isLocked());
             ps.setString(8, island.getBiome() != null ? island.getBiome().name() : Biome.PLAINS.name());
@@ -720,7 +777,7 @@ public class DataManager {
 
                     island.setGridIndex(rs.getInt("grid_index"));
                     island.setIslandSize(rs.getInt("island_size"));
-                    island.setLevel(rs.getInt("island_level"));
+                    island.setLevel(rs.getDouble("island_level"));
                     island.setIslandName(rs.getString("island_name"));
                     island.setLocked(rs.getBoolean("is_locked"));
                     island.loadBannedPlayersFromString(rs.getString("banned_players"));

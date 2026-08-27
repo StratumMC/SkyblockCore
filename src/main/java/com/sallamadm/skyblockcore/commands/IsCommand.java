@@ -191,26 +191,26 @@ public class IsCommand {
 
                 // /is lock
                 .withSubcommand(createSubCommand("lock", "Ziyaretçilere adanızı kapatın.",
-                        new CommandAPICommand("lock")
-                                .executesPlayer((player, args) -> {
-                                    Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
-                                    if (island == null) {
-                                        player.sendMessage(msg.getMessage("island.no-island"));
-                                        return;
-                                    }
-                                    if (!island.hasPermission(player.getUniqueId(), IslandPermissions.LOCK_ISLAND.getNode())) {
-                                        player.sendMessage(msg.getMessage("general.no-permission"));
-                                        return;
-                                    }
+                       new CommandAPICommand("lock")
+                               .executesPlayer((player, args) -> {
+                                   Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
+                                   if (island == null) {
+                                       player.sendMessage(msg.getMessage("island.no-island"));
+                                       return;
+                                   }
+                                   if (!island.hasPermission(player.getUniqueId(), IslandPermissions.LOCK_ISLAND.getNode())) {
+                                       player.sendMessage(msg.getMessage("general.no-permission"));
+                                       return;
+                                   }
 
-                                    if (island.isLocked()) {
-                                        player.sendMessage(msg.getMessage("island.already-locked"));
-                                        return;
-                                    }
+                                   if (island.isLocked()) {
+                                       player.sendMessage(msg.getMessage("island.already-locked"));
+                                       return;
+                                   }
 
-                                    island.setLocked(true);
-                                    player.sendMessage(msg.getMessage("island.locked"));
-                                })
+                                   island.setLocked(true);
+                                   player.sendMessage(msg.getMessage("island.locked"));
+                               })
                 ))
 
                 // /is unlock
@@ -979,7 +979,7 @@ public class IsCommand {
                                                     targetIsland.addLevel(amount);
                                                     plugin.getScoreboardManager().updateScoreboard(target);
 
-                                                    int newLevel = targetIsland.getLevel();
+                                                    double newLevel = targetIsland.getLevel();
                                                     player.sendMessage(msg.getMessage("admin.level-add-sender")
                                                             .replace("{target}", target.getName())
                                                             .replace("{amount}", String.valueOf(amount))

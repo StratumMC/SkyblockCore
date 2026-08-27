@@ -22,7 +22,7 @@ public class ScoreboardManager {
         obj.setDisplaySlot(DisplaySlot.SIDEBAR);
 
         Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
-        int level = (island != null) ? island.getLevel() : 0;
+        double level = (island != null) ? island.getLevel() : 0D;
         int likes = (island != null) ? plugin.getDataManager().getWeeklyLikeCount(island.getIslandUuid()) : 0;
         double rating = (island != null) ? plugin.getDataManager().getIslandRating(island.getIslandUuid()) : 0D;
 
