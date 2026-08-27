@@ -146,11 +146,18 @@ public class DataManager {
                     "FOREIGN KEY (island_uuid) REFERENCES sb_islands(island_uuid) ON DELETE CASCADE)");
 
             statement.execute("CREATE TABLE IF NOT EXISTS sb_island_likes (" +
+                    "island_uuid VARCHAR(36) PRIMARY KEY, " +
+                    "weekly_like INT NOT NULL DEFAULT 0, " +
+                    "monthly_like INT NOT NULL DEFAULT 0, " +
+                    "alltime_like INT NOT NULL DEFAULT 0, " +
+                    "last_week_key VARCHAR(10) NOT NULL DEFAULT '', " +
+                    "last_month_key VARCHAR(7) NOT NULL DEFAULT '', " +
+                    "FOREIGN KEY (island_uuid) REFERENCES sb_islands(island_uuid) ON DELETE CASCADE)");
+
+            statement.execute("CREATE TABLE IF NOT EXISTS sb_island_like_votes (" +
                     "island_uuid VARCHAR(36) NOT NULL, " +
                     "voter_uuid VARCHAR(36) NOT NULL, " +
                     "week_key VARCHAR(10) NOT NULL, " +
-                    "month_key VARCHAR(7) NOT NULL, " +
-                    "liked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
                     "PRIMARY KEY (island_uuid, voter_uuid, week_key), " +
                     "FOREIGN KEY (island_uuid) REFERENCES sb_islands(island_uuid) ON DELETE CASCADE)");
 
@@ -195,7 +202,75 @@ public class DataManager {
         return "STRATUM-" + normalizedCode;
     }
 
-    public boolean consumeMinecraftLinkCode(UUID playerUuid, String username, String inputCode) {
+    public boolean checkIfDiscordLinked(UUID playerUuid) {
+        if (connection == null || playerUuid == null) return false;
+
+        String selectSql = "SELECT mc_id FROM dc_identities WHERE mc_id = ? LIMIT 1";
+        try (PreparedStatement selectStatement = connection.prepareStatement(selectSql)) {
+            selectStatement.setString(1, playerUuid.toString());
+            try (ResultSet rs = selectStatement.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean checkIfWebLinked(UUID playerUuid) {
+        if (connection == null || playerUuid == null) return false;
+
+        String selectSql = "SELECT provider_user_id FROM stratum_identities WHERE provider_user_id = ? LIMIT 1";
+        try (PreparedStatement selectStatement = connection.prepareStatement(selectSql)) {
+            selectStatement.setString(1, playerUuid.toString());
+            try (ResultSet rs = selectStatement.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean consumeDiscordLinkCode(UUID playerUuid, String username, String inputCode) {
+        if (connection == null || playerUuid == null || username == null) return false;
+
+        String normalizedCode = normalizeLinkCode(inputCode);
+        if (normalizedCode == null) return false;
+
+        String selectSql = "SELECT dc_id FROM dc_link_codes WHERE code = ? LIMIT 1";
+        try (PreparedStatement selectStatement = connection.prepareStatement(selectSql)) {
+            selectStatement.setString(1, normalizedCode);
+            try (ResultSet rs = selectStatement.executeQuery()) {
+                if (!rs.next()) {
+                    return false;
+                }
+
+                String discordID = rs.getString("dc_id");
+
+                String insertSql = "INSERT INTO dc_identities (dc_id, mc_id, mc_username, created_at) VALUES (?, ?, ?, CURRENT_DATE)";
+                try (PreparedStatement insertStatement = connection.prepareStatement(insertSql)) {
+                    insertStatement.setString(1, discordID);
+                    insertStatement.setString(2, playerUuid.toString());
+                    insertStatement.setString(3, username);
+                    insertStatement.executeUpdate();
+                }
+
+                String deleteSql = "DELETE FROM dc_link_codes WHERE code = ?";
+                try (PreparedStatement deleteStatement = connection.prepareStatement(deleteSql)) {
+                    deleteStatement.setString(1, normalizedCode);
+                    deleteStatement.executeUpdate();
+                }
+
+                return true;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean consumeWebLinkCode(UUID playerUuid, String username, String inputCode) {
         if (connection == null || playerUuid == null || username == null) return false;
 
         String normalizedCode = normalizeLinkCode(inputCode);
@@ -346,8 +421,8 @@ public class DataManager {
         String monthKey = YearMonth.from(today).toString();
 
         try {
-            String weeklySql = "SELECT 1 FROM sb_island_likes WHERE island_uuid = ? AND voter_uuid = ? AND week_key = ?";
-            try (PreparedStatement ps = connection.prepareStatement(weeklySql)) {
+            String voteCheckSql = "SELECT 1 FROM sb_island_like_votes WHERE island_uuid = ? AND voter_uuid = ? AND week_key = ?";
+            try (PreparedStatement ps = connection.prepareStatement(voteCheckSql)) {
                 ps.setString(1, islandUuid);
                 ps.setString(2, voterUuid.toString());
                 ps.setString(3, weekKey);
@@ -356,28 +431,61 @@ public class DataManager {
                 }
             }
 
-            String monthlySql = "SELECT COUNT(*) FROM sb_island_likes WHERE island_uuid = ? AND voter_uuid = ? AND month_key = ?";
-            try (PreparedStatement ps = connection.prepareStatement(monthlySql)) {
-                ps.setString(1, islandUuid);
-                ps.setString(2, voterUuid.toString());
-                ps.setString(3, monthKey);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next() && rs.getInt(1) >= 4) return LikeResult.MONTHLY_LIMIT_REACHED;
-                }
-            }
-
-            String insertSql = "INSERT INTO sb_island_likes (island_uuid, voter_uuid, week_key, month_key) VALUES (?, ?, ?, ?)";
-            try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
+            String voteInsertSql = "INSERT INTO sb_island_like_votes (island_uuid, voter_uuid, week_key) VALUES (?, ?, ?)";
+            try (PreparedStatement ps = connection.prepareStatement(voteInsertSql)) {
                 ps.setString(1, islandUuid);
                 ps.setString(2, voterUuid.toString());
                 ps.setString(3, weekKey);
-                ps.setString(4, monthKey);
                 ps.executeUpdate();
             }
+
+            String ensureRowSql = "INSERT IGNORE INTO sb_island_likes (island_uuid, last_week_key, last_month_key) VALUES (?, ?, ?)";
+            try (PreparedStatement ps = connection.prepareStatement(ensureRowSql)) {
+                ps.setString(1, islandUuid);
+                ps.setString(2, weekKey);
+                ps.setString(3, monthKey);
+                ps.executeUpdate();
+            }
+
+            resetExpiredLikeCounters();
+
+            String incrementSql = "UPDATE sb_island_likes SET weekly_like = weekly_like + 1, monthly_like = monthly_like + 1, alltime_like = alltime_like + 1 WHERE island_uuid = ?";
+            try (PreparedStatement ps = connection.prepareStatement(incrementSql)) {
+                ps.setString(1, islandUuid);
+                ps.executeUpdate();
+            }
+
             return LikeResult.SUCCESS;
         } catch (SQLException e) {
             e.printStackTrace();
             return LikeResult.DATABASE_ERROR;
+        }
+    }
+
+    private void resetExpiredLikeCounters() {
+        if (connection == null) return;
+
+        LocalDate today = LocalDate.now();
+        WeekFields weekFields = WeekFields.ISO;
+        String weekKey = today.get(weekFields.weekBasedYear()) + "-" + String.format("%02d", today.get(weekFields.weekOfWeekBasedYear()));
+        String monthKey = YearMonth.from(today).toString();
+
+        try (PreparedStatement ps = connection.prepareStatement(
+                "UPDATE sb_island_likes SET weekly_like = 0, last_week_key = ? WHERE last_week_key <> ?")) {
+            ps.setString(1, weekKey);
+            ps.setString(2, weekKey);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        try (PreparedStatement ps = connection.prepareStatement(
+                "UPDATE sb_island_likes SET monthly_like = 0, last_month_key = ? WHERE last_month_key <> ?")) {
+            ps.setString(1, monthKey);
+            ps.setString(2, monthKey);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
@@ -453,34 +561,27 @@ public class DataManager {
     }
 
     public int getWeeklyLikeCount(String islandUuid) {
-        LocalDate today = LocalDate.now();
-        WeekFields weekFields = WeekFields.ISO;
-        String weekKey = today.get(weekFields.weekBasedYear()) + "-" + String.format("%02d", today.get(weekFields.weekOfWeekBasedYear()));
-        return getLikeCount(islandUuid, "week_key", weekKey);
+        resetExpiredLikeCounters();
+        return getLikeColumn(islandUuid, "weekly_like");
     }
 
     public int getMonthlyLikeCount(String islandUuid) {
-        return getLikeCount(islandUuid, "month_key", YearMonth.now().toString());
+        resetExpiredLikeCounters();
+        return getLikeColumn(islandUuid, "monthly_like");
     }
 
     public int getTotalLikeCount(String islandUuid) {
-        return getLikeCount(islandUuid, null, null);
+        return getLikeColumn(islandUuid, "alltime_like");
     }
 
-    private int getLikeCount(String islandUuid, String periodColumn, String periodKey) {
+    private int getLikeColumn(String islandUuid, String column) {
         if (connection == null || islandUuid == null) return 0;
 
-        String sql;
-        if (periodColumn != null) {
-            sql = "SELECT COUNT(DISTINCT voter_uuid) FROM sb_island_likes WHERE island_uuid = ? AND " + periodColumn + " = ?";
-        } else {
-            sql = "SELECT COUNT(DISTINCT voter_uuid) FROM sb_island_likes WHERE island_uuid = ?";
-        }
+        String sql = "SELECT " + column + " FROM sb_island_likes WHERE island_uuid = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, islandUuid);
-            if (periodColumn != null) ps.setString(2, periodKey);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return rs.getInt(1);
+                if (rs.next()) return rs.getInt(column);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -491,31 +592,22 @@ public class DataManager {
     public Map<String, Integer> getTopLikedIslands(String period) {
         if (connection == null) return Collections.emptyMap();
 
-        String periodColumn = null;
-        String periodKey = null;
+        resetExpiredLikeCounters();
+
+        String column;
         if (period.equals("hafta")) {
-            LocalDate today = LocalDate.now();
-            WeekFields weekFields = WeekFields.ISO;
-            periodColumn = "week_key";
-            periodKey = today.get(weekFields.weekBasedYear()) + "-" + String.format("%02d", today.get(weekFields.weekOfWeekBasedYear()));
+            column = "weekly_like";
         } else if (period.equals("ay")) {
-            periodColumn = "month_key";
-            periodKey = YearMonth.now().toString();
+            column = "monthly_like";
+        } else {
+            column = "alltime_like";
         }
 
         Map<String, Integer> likes = new LinkedHashMap<>();
-        String sql;
-        if (periodColumn != null) {
-            sql = "SELECT island_uuid, COUNT(DISTINCT voter_uuid) AS likes FROM sb_island_likes WHERE " + periodColumn + " = ? GROUP BY island_uuid ORDER BY likes DESC LIMIT 10";
-        } else {
-            sql = "SELECT island_uuid, COUNT(DISTINCT voter_uuid) AS likes FROM sb_island_likes GROUP BY island_uuid ORDER BY likes DESC LIMIT 10";
-        }
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            if (periodColumn != null) ps.setString(1, periodKey);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    likes.put(rs.getString("island_uuid"), rs.getInt("likes"));
-                }
+        String sql = "SELECT island_uuid, " + column + " FROM sb_island_likes WHERE " + column + " > 0 ORDER BY " + column + " DESC LIMIT 10";
+        try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                likes.put(rs.getString("island_uuid"), rs.getInt(column));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -526,10 +618,12 @@ public class DataManager {
     public void saveIslandAsync(Island island) {
         if (loadingData || connection == null) return;
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            try {
-                saveIslandSync(island);
-            } catch (SQLException e) {
-                e.printStackTrace();
+            synchronized (island) {
+                try {
+                    saveIslandSync(island);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
         });
     }

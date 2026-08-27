@@ -5,26 +5,26 @@ import com.sallamadm.skyblockcore.config.MessageManager;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.StringArgument;
 
-public class WebConnectCommand {
+public class DiscordConnectCommand {
 
     public static void registerCommand(SkyblockCore plugin) {
         MessageManager msg = plugin.getMessageManager();
 
-        new CommandAPICommand("site-bagla")
+        new CommandAPICommand("discord-bagla")
                 .withArguments(new StringArgument("code"))
                 .executesPlayer((player, args) -> {
                     String rawCode = (String) args.get("code");
-                    boolean matches = plugin.getDataManager().consumeWebLinkCode(player.getUniqueId(), player.getName(), rawCode);
-                    boolean checkIfWebConnect = plugin.getDataManager().checkIfWebLinked(player.getUniqueId());
-                    if(checkIfWebConnect) {
-                        player.sendMessage(msg.getMessage("webconnect.already_linked"));
+                    boolean matches = plugin.getDataManager().consumeDiscordLinkCode(player.getUniqueId(), player.getName(), rawCode);
+                    boolean checkIfDiscordConnect = plugin.getDataManager().checkIfDiscordLinked(player.getUniqueId());
+                    if(checkIfDiscordConnect) {
+                        player.sendMessage(msg.getMessage("discordconnect.already_linked"));
                         return;
                     }
                     if (matches) {
-                        player.sendMessage(msg.getMessage("webconnect.success"));
+                        player.sendMessage(msg.getMessage("discordconnect.success"));
                         return;
                     }
-                    player.sendMessage(msg.getMessage("webconnect.failure"));
+                    player.sendMessage(msg.getMessage("discordconnect.failure"));
                 })
                 .register();
     }

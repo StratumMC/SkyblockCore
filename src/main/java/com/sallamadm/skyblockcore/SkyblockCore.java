@@ -64,6 +64,7 @@ public final class SkyblockCore extends JavaPlugin {
         FlyCommand.registerCommand(this);
         FlyItemCommand.registerCommand(this);
         WebConnectCommand.registerCommand(this);
+        DiscordConnectCommand.registerCommand(this);
 
 
         getServer().getPluginManager().registerEvents(new JoinListener(this), this);

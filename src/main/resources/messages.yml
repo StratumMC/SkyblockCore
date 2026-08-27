@@ -142,7 +142,13 @@ members:
 
 webconnect:
   success: "&aWeb bağlantısı başarıyla kuruldu!"
-  failure: "&cWeb bağlantısı kurulamadı! Lütfen web panelinde kodu girdiğinden emin ol."
+  failure: "&cWeb bağlantısı kurulamadı! Lütfen doğru kodu girdiğinden emin ol."
+  already_linked: "&cZaten web bağlantısı kurdunuz!"
+
+discordconnect:
+  success: "&aDiscord bağlantısı başarıyla kuruldu!"
+  failure: "&cDiscord bağlantısı kurulamadı! Lütfen doğru kodu girdiğinden emin ol."
+  already_linked: "&cZaten discord bağlantısı kurdunuz!"
 
 invite:
   cannot-invite-self: "&cKendini davet edemezsin!"

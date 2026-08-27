@@ -64,6 +64,9 @@ public class IsCommand {
             return visibleWarps.toArray(new String[0]);
         });
 
+        ArgumentSuggestions<CommandSender> likePeriodSuggestions =
+                ArgumentSuggestions.strings("hafta", "ay", "hepsi");
+
         new CommandAPICommand("is")
                 .withAliases("island")
 
@@ -217,26 +220,26 @@ public class IsCommand {
 
                 // /is lock
                 .withSubcommand(createSubCommand("lock", "Ziyaretçilere adanızı kapatın.",
-                       new CommandAPICommand("lock")
-                               .executesPlayer((player, args) -> {
-                                   Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
-                                   if (island == null) {
-                                       player.sendMessage(msg.getMessage("island.no-island"));
-                                       return;
-                                   }
-                                   if (!island.hasPermission(player.getUniqueId(), IslandPermissions.LOCK_ISLAND.getNode())) {
-                                       player.sendMessage(msg.getMessage("general.no-permission"));
-                                       return;
-                                   }
+                        new CommandAPICommand("lock")
+                                .executesPlayer((player, args) -> {
+                                    Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
+                                    if (island == null) {
+                                        player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+                                    if (!island.hasPermission(player.getUniqueId(), IslandPermissions.LOCK_ISLAND.getNode())) {
+                                        player.sendMessage(msg.getMessage("general.no-permission"));
+                                        return;
+                                    }
 
-                                   if (island.isLocked()) {
-                                       player.sendMessage(msg.getMessage("island.already-locked"));
-                                       return;
-                                   }
+                                    if (island.isLocked()) {
+                                        player.sendMessage(msg.getMessage("island.already-locked"));
+                                        return;
+                                    }
 
-                                   island.setLocked(true);
-                                   player.sendMessage(msg.getMessage("island.locked"));
-                               })
+                                    island.setLocked(true);
+                                    player.sendMessage(msg.getMessage("island.locked"));
+                                })
                 ))
 
                 // /is unlock
@@ -408,7 +411,7 @@ public class IsCommand {
                 // /is likes <hafta/ay/hepsi>
                 .withSubcommand(createSubCommand("likes <hafta/ay/hepsi>", "Adanızın beğeni istatistiklerinizi görün.",
                         new CommandAPICommand("likes")
-                                .withArguments(new StringArgument("period"))
+                                .withArguments(new StringArgument("period").replaceSuggestions(likePeriodSuggestions))
                                 .executesPlayer((player, args) -> {
                                     String period = ((String) args.get("period")).toLowerCase(Locale.ROOT);
                                     if (!period.equals("hafta") && !period.equals("ay") && !period.equals("hepsi")) {
@@ -434,7 +437,7 @@ public class IsCommand {
                 // /is liketop <hafta/ay/hepsi>
                 .withSubcommand(createSubCommand("liketop <hafta/ay/hepsi>", "En çok beğeni alan adaları görün.",
                         new CommandAPICommand("liketop")
-                                .withArguments(new StringArgument("period"))
+                                .withArguments(new StringArgument("period").replaceSuggestions(likePeriodSuggestions))
                                 .executesPlayer((player, args) -> {
                                     String period = ((String) args.get("period")).toLowerCase(Locale.ROOT);
                                     if (!period.equals("hafta") && !period.equals("ay") && !period.equals("hepsi")) {

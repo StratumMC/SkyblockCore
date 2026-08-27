@@ -34,7 +34,7 @@ public class ScoreboardManager {
         Score likeLine = obj.getScore(ChatColor.WHITE + "Ada Like: " + ChatColor.LIGHT_PURPLE + likes);
         Score ratingLine = obj.getScore(ChatColor.WHITE + "Ada Rating: " + ChatColor.AQUA + String.format(Locale.US, "%.2f", rating));
         Score playerLine = obj.getScore(ChatColor.WHITE + "Oyuncu: " + ChatColor.YELLOW + player.getName());
-        Score levelLine = obj.getScore(ChatColor.WHITE + "Ada leveli: " + ChatColor.GREEN + level);
+        Score levelLine = obj.getScore(ChatColor.WHITE + "Ada leveli: " + ChatColor.GREEN + String.format(Locale.US, "%.2f", level));
         Score flyLine = obj.getScore(ChatColor.WHITE + "Fly süresi: " + ChatColor.AQUA + flyDisplay);
         Score blank2 = obj.getScore("  ");
         Score footer = obj.getScore(ChatColor.GRAY + "localhost");
