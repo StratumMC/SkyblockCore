@@ -85,6 +85,7 @@ public final class SkyblockCore extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new MembersMenu(), this);
         getServer().getPluginManager().registerEvents(new GameruleMenu(), this);
         getServer().getPluginManager().registerEvents(new WeatherMenu(), this);
+        getServer().getPluginManager().registerEvents(new IsTopMenu(), this);
 
         IslandWeatherManager.startThunderEffectTask(this);
 

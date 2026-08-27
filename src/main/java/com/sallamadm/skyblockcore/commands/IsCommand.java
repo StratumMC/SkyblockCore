@@ -200,6 +200,14 @@ public class IsCommand {
                                 })
                 ))
 
+                // /is delete
+                .withSubcommand(createSubCommand("top", "Ada sıralamasını görün.",
+                        new CommandAPICommand("top")
+                                .executesPlayer((player, args) -> {
+                                    IsTopMenu.openTopMenu(player);
+                                })
+                ))
+
                 // /is go
                 .withSubcommand(createSubCommand("go", "Adanıza ışınlanın.",
                         new CommandAPICommand("go")
