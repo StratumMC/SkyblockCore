@@ -7,6 +7,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.*;
 
+import java.util.Locale;
+
 public class ScoreboardManager {
     private final SkyblockCore plugin;
 
@@ -21,21 +23,27 @@ public class ScoreboardManager {
 
         Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
         int level = (island != null) ? island.getLevel() : 0;
+        int likes = (island != null) ? plugin.getDataManager().getWeeklyLikeCount(island.getIslandUuid()) : 0;
+        double rating = (island != null) ? plugin.getDataManager().getIslandRating(island.getIslandUuid()) : 0D;
 
         String flyDisplay = player.isOp()
                 ? "0"
                 : formatFlyDuration(plugin.getFlightManager().getRemainingSeconds(player.getUniqueId()));
 
         Score blank1 = obj.getScore(" ");
+        Score likeLine = obj.getScore(ChatColor.WHITE + "Ada Like: " + ChatColor.LIGHT_PURPLE + likes);
+        Score ratingLine = obj.getScore(ChatColor.WHITE + "Ada Rating: " + ChatColor.AQUA + String.format(Locale.US, "%.2f", rating));
         Score playerLine = obj.getScore(ChatColor.WHITE + "Oyuncu: " + ChatColor.YELLOW + player.getName());
         Score levelLine = obj.getScore(ChatColor.WHITE + "Ada leveli: " + ChatColor.GREEN + level);
         Score flyLine = obj.getScore(ChatColor.WHITE + "Fly süresi: " + ChatColor.AQUA + flyDisplay);
         Score blank2 = obj.getScore("  ");
         Score footer = obj.getScore(ChatColor.GRAY + "localhost");
 
-        blank1.setScore(6);
-        playerLine.setScore(5);
-        levelLine.setScore(4);
+        blank1.setScore(8);
+        playerLine.setScore(7);
+        levelLine.setScore(6);
+        likeLine.setScore(5);
+        ratingLine.setScore(4);
         flyLine.setScore(3);
         blank2.setScore(2);
         footer.setScore(1);

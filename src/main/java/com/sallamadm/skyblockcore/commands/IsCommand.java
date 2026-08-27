@@ -3,6 +3,7 @@ package com.sallamadm.skyblockcore.commands;
 import com.sallamadm.skyblockcore.SkyblockCore;
 import com.sallamadm.skyblockcore.border.BorderManager;
 import com.sallamadm.skyblockcore.config.MessageManager;
+import com.sallamadm.skyblockcore.data.DataManager;
 import com.sallamadm.skyblockcore.events.IslandEvents;
 import com.sallamadm.skyblockcore.gui.*;
 import com.sallamadm.skyblockcore.island.InviteManager;
@@ -233,6 +234,207 @@ public class IsCommand {
 
                                     island.setLocked(false);
                                     player.sendMessage(msg.getMessage("island.unlocked"));
+                                })
+                ))
+
+                // /is rate <sayı>
+                .withSubcommand(createSubCommand("rate <sayı>", "Bulunduğunuz adayı puanlayın.",
+                        new CommandAPICommand("rate")
+                                .withArguments(new StringArgument("rating"))
+                                .executesPlayer((player, args) -> {
+                                    double rating;
+                                    try {
+                                        rating = Double.parseDouble((String) args.get("rating"));
+                                    } catch (NumberFormatException e) {
+                                        player.sendMessage(msg.getMessage("rating.invalid-number"));
+                                        return;
+                                    }
+
+                                    if (Double.isNaN(rating) || Double.isInfinite(rating) || rating < 0D || rating > 5D) {
+                                        player.sendMessage(msg.getMessage("rating.invalid-number"));
+                                        return;
+                                    }
+
+                                    World skyblockWorld = plugin.getWorldManager().getSkyblockWorld();
+                                    if (skyblockWorld == null || !player.getWorld().equals(skyblockWorld)) {
+                                        player.sendMessage(msg.getMessage("rating.wrong-world"));
+                                        return;
+                                    }
+
+                                    Island targetIsland = plugin.getIslandManager().getIslandAt(player.getLocation());
+                                    if (targetIsland == null) {
+                                        player.sendMessage(msg.getMessage("rating.no-island-here"));
+                                        return;
+                                    }
+
+                                    Island playerIsland = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
+                                    if (targetIsland == playerIsland) {
+                                        player.sendMessage(msg.getMessage("rating.cannot-rate-own"));
+                                        return;
+                                    }
+
+                                    DataManager.RateResult result = plugin.getDataManager().addIslandRating(player.getUniqueId(), targetIsland.getIslandUuid(), rating);
+                                    if (result == DataManager.RateResult.ALREADY_RATED) {
+                                        player.sendMessage(msg.getMessage("rating.already-rated"));
+                                        return;
+                                    }
+                                    if (result == DataManager.RateResult.DATABASE_ERROR) {
+                                        player.sendMessage(msg.getMessage("rating.database-error"));
+                                        return;
+                                    }
+
+                                    player.sendMessage(msg.getMessage("rating.success")
+                                            .replace("{island}", targetIsland.getIslandName())
+                                            .replace("{rating}", String.format(Locale.US, "%.2f", rating)));
+                                    Player owner = Bukkit.getPlayer(targetIsland.getOwnerUUID());
+                                    if (owner != null) {
+                                        plugin.getScoreboardManager().updateScoreboard(owner);
+                                    }
+                                })
+                ))
+
+                // /is rating
+                .withSubcommand(createSubCommand("rating", "Ada ratinginizi görün.",
+                        new CommandAPICommand("rating")
+                                .executesPlayer((player, args) -> {
+                                    Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
+                                    if (island == null) {
+                                        player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+
+                                    double rating = plugin.getDataManager().getIslandRating(island.getIslandUuid());
+                                    player.sendMessage(msg.getMessage("rating.stats")
+                                            .replace("{rating}", String.format(Locale.US, "%.2f", rating)));
+                                })
+                ))
+
+                // /is ratingtop
+                .withSubcommand(createSubCommand("ratingtop", "En yüksek ratingli adaları görün.",
+                        new CommandAPICommand("ratingtop")
+                                .executesPlayer((player, args) -> {
+                                    Map<String, Double> topRatings = plugin.getDataManager().getTopRatedIslands();
+                                    player.sendMessage(ChatColor.GOLD + "========== [ ADA RATING SIRALAMASI ] ==========");
+                                    if (topRatings.isEmpty()) {
+                                        player.sendMessage(msg.getMessage("rating.no-ratings"));
+                                    } else {
+                                        int rank = 1;
+                                        for (Map.Entry<String, Double> entry : topRatings.entrySet()) {
+                                            Island island = plugin.getIslandManager().getAllIslands().values().stream()
+                                                    .filter(currentIsland -> currentIsland.getIslandUuid().equals(entry.getKey()))
+                                                    .findFirst()
+                                                    .orElse(null);
+                                            if (island != null) {
+                                                player.sendMessage(ChatColor.YELLOW + "#" + rank + ChatColor.GRAY + " " + island.getIslandName()
+                                                        + ChatColor.AQUA + " - " + String.format(Locale.US, "%.2f", entry.getValue()));
+                                                rank++;
+                                            }
+                                        }
+                                    }
+                                    player.sendMessage(ChatColor.GOLD + "===============================================");
+                                })
+                ))
+
+                // /is like
+                .withSubcommand(createSubCommand("like", "Bulunduğunuz adayı beğenin.",
+                        new CommandAPICommand("like")
+                                .executesPlayer((player, args) -> {
+                                    World skyblockWorld = plugin.getWorldManager().getSkyblockWorld();
+                                    if (skyblockWorld == null || !player.getWorld().equals(skyblockWorld)) {
+                                        player.sendMessage(msg.getMessage("likes.wrong-world"));
+                                        return;
+                                    }
+
+                                    Island targetIsland = plugin.getIslandManager().getIslandAt(player.getLocation());
+                                    if (targetIsland == null) {
+                                        player.sendMessage(msg.getMessage("likes.no-island-here"));
+                                        return;
+                                    }
+
+                                    Island playerIsland = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
+                                    if (targetIsland == playerIsland) {
+                                        player.sendMessage(msg.getMessage("likes.cannot-like-own"));
+                                        return;
+                                    }
+
+                                    DataManager.LikeResult result = plugin.getDataManager().addIslandLike(player.getUniqueId(), targetIsland.getIslandUuid());
+                                    if (result == DataManager.LikeResult.ALREADY_LIKED_THIS_WEEK) {
+                                        player.sendMessage(msg.getMessage("likes.already-liked-this-week"));
+                                        return;
+                                    }
+                                    if (result == DataManager.LikeResult.MONTHLY_LIMIT_REACHED) {
+                                        player.sendMessage(msg.getMessage("likes.monthly-limit"));
+                                        return;
+                                    }
+                                    if (result == DataManager.LikeResult.DATABASE_ERROR) {
+                                        player.sendMessage(msg.getMessage("likes.database-error"));
+                                        return;
+                                    }
+
+                                    player.sendMessage(msg.getMessage("likes.success").replace("{island}", targetIsland.getIslandName()));
+                                    Player owner = Bukkit.getPlayer(targetIsland.getOwnerUUID());
+                                    if (owner != null) {
+                                        plugin.getScoreboardManager().updateScoreboard(owner);
+                                    }
+                                })
+                ))
+
+                // /is likes <hafta/ay/hepsi>
+                .withSubcommand(createSubCommand("likes <hafta/ay/hepsi>", "Adanızın beğeni istatistiklerinizi görün.",
+                        new CommandAPICommand("likes")
+                                .withArguments(new StringArgument("period"))
+                                .executesPlayer((player, args) -> {
+                                    String period = ((String) args.get("period")).toLowerCase(Locale.ROOT);
+                                    if (!period.equals("hafta") && !period.equals("ay") && !period.equals("hepsi")) {
+                                        player.sendMessage(msg.getMessage("likes.invalid-period"));
+                                        return;
+                                    }
+
+                                    Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
+                                    if (island == null) {
+                                        player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+
+                                    int likes = period.equals("hafta") ? plugin.getDataManager().getWeeklyLikeCount(island.getIslandUuid())
+                                            : period.equals("ay") ? plugin.getDataManager().getMonthlyLikeCount(island.getIslandUuid())
+                                              : plugin.getDataManager().getTotalLikeCount(island.getIslandUuid());
+                                    player.sendMessage(msg.getMessage("likes.stats")
+                                            .replace("{period}", period)
+                                            .replace("{likes}", String.valueOf(likes)));
+                                })
+                ))
+
+                // /is toplikes <hafta/ay/hepsi>
+                .withSubcommand(createSubCommand("toplikes <hafta/ay/hepsi>", "En çok beğeni alan adaları görün.",
+                        new CommandAPICommand("toplikes")
+                                .withArguments(new StringArgument("period"))
+                                .executesPlayer((player, args) -> {
+                                    String period = ((String) args.get("period")).toLowerCase(Locale.ROOT);
+                                    if (!period.equals("hafta") && !period.equals("ay") && !period.equals("hepsi")) {
+                                        player.sendMessage(msg.getMessage("likes.invalid-top-period"));
+                                        return;
+                                    }
+
+                                    Map<String, Integer> topLikes = plugin.getDataManager().getTopLikedIslands(period);
+                                    player.sendMessage(ChatColor.GOLD + "========== [ " + period.toUpperCase(Locale.ROOT) + "LIK ADA SIRALAMASI ] ==========");
+                                    if (topLikes.isEmpty()) {
+                                        player.sendMessage(msg.getMessage("likes.no-likes"));
+                                    } else {
+                                        int rank = 1;
+                                        for (Map.Entry<String, Integer> entry : topLikes.entrySet()) {
+                                            Island island = plugin.getIslandManager().getAllIslands().values().stream()
+                                                    .filter(currentIsland -> currentIsland.getIslandUuid().equals(entry.getKey()))
+                                                    .findFirst()
+                                                    .orElse(null);
+                                            if (island != null) {
+                                                player.sendMessage(ChatColor.YELLOW + "#" + rank + ChatColor.GRAY + " " + island.getIslandName()
+                                                        + ChatColor.LIGHT_PURPLE + " - " + entry.getValue() + " like");
+                                                rank++;
+                                            }
+                                        }
+                                    }
+                                    player.sendMessage(ChatColor.GOLD + "================================================");
                                 })
                 ))
 

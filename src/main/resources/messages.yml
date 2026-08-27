@@ -36,6 +36,30 @@ island:
   cannot-ban-higher-rank: "&cBu oyuncuyu banlayamazsınız!"
   cannot-kick-higher-rank: "&cBu oyuncuyu kickleyemezsin!"
 
+likes:
+  wrong-world: "&cBu komutu sadece skyblock dünyasında kullanabilirsin!"
+  no-island-here: "&cBu konumda begenebilecegin bir ada yok!"
+  cannot-like-own: "&cKendi adanı beğenemezsin!"
+  already-liked-this-week: "&cBu adayı bu hafta zaten beğendin!"
+  monthly-limit: "&cBu adayı bu ay en fazla 4 kez beğenebilirsin!"
+  database-error: "&cBeğeni kaydedilirken bir hata oluştu!"
+  success: "&a{island} adasını beğendin!"
+  invalid-period: "&cGeçerli kullanım: /is likes <hafta/ay/hepsi>"
+  invalid-top-period: "&cGeçerli kullanım: /is toplikes <hafta/ay/hepsi>"
+  stats: "&a{period} döneminde aldığın beğeni sayısı: &e{likes}"
+  no-likes: "&eBu dönemde henüz beğeni alan bir ada yok."
+
+rating:
+  wrong-world: "&cBu komutu sadece skyblock dunyasindaki bir adada kullanabilirsin!"
+  no-island-here: "&cBu konumda puanlayabilecegin bir ada yok!"
+  cannot-rate-own: "&cKendi adani puanlayamazsin!"
+  invalid-number: "&c0 ile 5 arasynda bir sayi girmelisin!"
+  already-rated: "&cBu adayi daha once puanladin, puanin degistirilemez!"
+  database-error: "&cPuan kaydedilirken bir hata olustu!"
+  success: "&a{island} adasina &e{rating} &apuan verdin!"
+  stats: "&aAdanin ortalama ratingi: &e{rating}"
+  no-ratings: "&eHenuz puan alan ada yok."
+
 warp:
   created: "&aWarp &e{warp} &aoluşturuldu! Şu anda kullancılardan gizli."
   deleted: "&aWarp &e{warp} &asilindi!"

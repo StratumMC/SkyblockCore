@@ -10,9 +10,25 @@ import org.bukkit.World;
 import org.bukkit.block.Biome;
 
 import java.sql.*;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.temporal.WeekFields;
 import java.util.*;
 
 public class DataManager {
+
+    public enum LikeResult {
+        SUCCESS,
+        ALREADY_LIKED_THIS_WEEK,
+        MONTHLY_LIMIT_REACHED,
+        DATABASE_ERROR
+    }
+
+    public enum RateResult {
+        SUCCESS,
+        ALREADY_RATED,
+        DATABASE_ERROR
+    }
 
     private final SkyblockCore plugin;
     private Connection connection;
@@ -127,6 +143,23 @@ public class DataManager {
             statement.execute("CREATE TABLE IF NOT EXISTS sb_island_weather (" +
                     "island_uuid VARCHAR(36) PRIMARY KEY, " +
                     "weather_option VARCHAR(32) NOT NULL, " +
+                    "FOREIGN KEY (island_uuid) REFERENCES sb_islands(island_uuid) ON DELETE CASCADE)");
+
+            statement.execute("CREATE TABLE IF NOT EXISTS sb_island_likes (" +
+                    "island_uuid VARCHAR(36) NOT NULL, " +
+                    "voter_uuid VARCHAR(36) NOT NULL, " +
+                    "week_key VARCHAR(10) NOT NULL, " +
+                    "month_key VARCHAR(7) NOT NULL, " +
+                    "liked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                    "PRIMARY KEY (island_uuid, voter_uuid, week_key), " +
+                    "FOREIGN KEY (island_uuid) REFERENCES sb_islands(island_uuid) ON DELETE CASCADE)");
+
+            statement.execute("CREATE TABLE IF NOT EXISTS sb_island_ratings (" +
+                    "island_uuid VARCHAR(36) NOT NULL, " +
+                    "voter_uuid VARCHAR(36) NOT NULL, " +
+                    "rating DECIMAL(4,2) NOT NULL, " +
+                    "rated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                    "PRIMARY KEY (island_uuid, voter_uuid), " +
                     "FOREIGN KEY (island_uuid) REFERENCES sb_islands(island_uuid) ON DELETE CASCADE)");
 
             statement.execute("CREATE TABLE IF NOT EXISTS sb_accounts (" +
@@ -245,6 +278,171 @@ public class DataManager {
     public void saveData() {
         if (loadingData || connection == null) return;
         Bukkit.getScheduler().runTaskAsynchronously(plugin, this::saveDataSync);
+    }
+
+    public synchronized LikeResult addIslandLike(UUID voterUuid, String islandUuid) {
+        if (connection == null || islandUuid == null) return LikeResult.DATABASE_ERROR;
+
+        LocalDate today = LocalDate.now();
+        WeekFields weekFields = WeekFields.ISO;
+        String weekKey = today.get(weekFields.weekBasedYear()) + "-" + String.format("%02d", today.get(weekFields.weekOfWeekBasedYear()));
+        String monthKey = YearMonth.from(today).toString();
+
+        try {
+            String weeklySql = "SELECT 1 FROM sb_island_likes WHERE island_uuid = ? AND voter_uuid = ? AND week_key = ?";
+            try (PreparedStatement ps = connection.prepareStatement(weeklySql)) {
+                ps.setString(1, islandUuid);
+                ps.setString(2, voterUuid.toString());
+                ps.setString(3, weekKey);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return LikeResult.ALREADY_LIKED_THIS_WEEK;
+                }
+            }
+
+            String monthlySql = "SELECT COUNT(*) FROM sb_island_likes WHERE island_uuid = ? AND voter_uuid = ? AND month_key = ?";
+            try (PreparedStatement ps = connection.prepareStatement(monthlySql)) {
+                ps.setString(1, islandUuid);
+                ps.setString(2, voterUuid.toString());
+                ps.setString(3, monthKey);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next() && rs.getInt(1) >= 4) return LikeResult.MONTHLY_LIMIT_REACHED;
+                }
+            }
+
+            String insertSql = "INSERT INTO sb_island_likes (island_uuid, voter_uuid, week_key, month_key) VALUES (?, ?, ?, ?)";
+            try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
+                ps.setString(1, islandUuid);
+                ps.setString(2, voterUuid.toString());
+                ps.setString(3, weekKey);
+                ps.setString(4, monthKey);
+                ps.executeUpdate();
+            }
+            return LikeResult.SUCCESS;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return LikeResult.DATABASE_ERROR;
+        }
+    }
+
+    public synchronized RateResult addIslandRating(UUID voterUuid, String islandUuid, double rating) {
+        if (connection == null || islandUuid == null) return RateResult.DATABASE_ERROR;
+
+        try {
+            String existsSql = "SELECT 1 FROM sb_island_ratings WHERE island_uuid = ? AND voter_uuid = ?";
+            try (PreparedStatement ps = connection.prepareStatement(existsSql)) {
+                ps.setString(1, islandUuid);
+                ps.setString(2, voterUuid.toString());
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return RateResult.ALREADY_RATED;
+                }
+            }
+
+            String insertSql = "INSERT INTO sb_island_ratings (island_uuid, voter_uuid, rating) VALUES (?, ?, ?)";
+            try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
+                ps.setString(1, islandUuid);
+                ps.setString(2, voterUuid.toString());
+                ps.setDouble(3, rating);
+                ps.executeUpdate();
+            }
+            return RateResult.SUCCESS;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return RateResult.DATABASE_ERROR;
+        }
+    }
+
+    public double getIslandRating(String islandUuid) {
+        if (connection == null || islandUuid == null) return 0D;
+
+        String sql = "SELECT AVG(rating) FROM sb_island_ratings WHERE island_uuid = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, islandUuid);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getDouble(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0D;
+    }
+
+    public Map<String, Double> getTopRatedIslands() {
+        if (connection == null) return Collections.emptyMap();
+
+        Map<String, Double> ratings = new LinkedHashMap<>();
+        String sql = "SELECT island_uuid, AVG(rating) AS rating FROM sb_island_ratings GROUP BY island_uuid ORDER BY rating DESC LIMIT 10";
+        try (PreparedStatement ps = connection.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                ratings.put(rs.getString("island_uuid"), rs.getDouble("rating"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return ratings;
+    }
+
+    public int getWeeklyLikeCount(String islandUuid) {
+        LocalDate today = LocalDate.now();
+        WeekFields weekFields = WeekFields.ISO;
+        String weekKey = today.get(weekFields.weekBasedYear()) + "-" + String.format("%02d", today.get(weekFields.weekOfWeekBasedYear()));
+        return getLikeCount(islandUuid, "week_key", weekKey);
+    }
+
+    public int getMonthlyLikeCount(String islandUuid) {
+        return getLikeCount(islandUuid, "month_key", YearMonth.now().toString());
+    }
+
+    public int getTotalLikeCount(String islandUuid) {
+        return getLikeCount(islandUuid, null, null);
+    }
+
+    private int getLikeCount(String islandUuid, String periodColumn, String periodKey) {
+        if (connection == null || islandUuid == null) return 0;
+
+        String sql = "SELECT COUNT(*) FROM sb_island_likes WHERE island_uuid = ?" +
+                (periodColumn != null ? " AND " + periodColumn + " = ?" : "");
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, islandUuid);
+            if (periodColumn != null) ps.setString(2, periodKey);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public Map<String, Integer> getTopLikedIslands(String period) {
+        if (connection == null) return Collections.emptyMap();
+
+        String periodColumn = null;
+        String periodKey = null;
+        if (period.equals("hafta")) {
+            LocalDate today = LocalDate.now();
+            WeekFields weekFields = WeekFields.ISO;
+            periodColumn = "week_key";
+            periodKey = today.get(weekFields.weekBasedYear()) + "-" + String.format("%02d", today.get(weekFields.weekOfWeekBasedYear()));
+        } else if (period.equals("ay")) {
+            periodColumn = "month_key";
+            periodKey = YearMonth.now().toString();
+        }
+
+        Map<String, Integer> likes = new LinkedHashMap<>();
+        String sql = "SELECT island_uuid, COUNT(*) AS likes FROM sb_island_likes" +
+                (periodColumn != null ? " WHERE " + periodColumn + " = ?" : "") +
+                " GROUP BY island_uuid ORDER BY likes DESC LIMIT 10";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            if (periodColumn != null) ps.setString(1, periodKey);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    likes.put(rs.getString("island_uuid"), rs.getInt("likes"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return likes;
     }
 
     public void saveIslandAsync(Island island) {
