@@ -10,7 +10,7 @@ public class WebConnectCommand {
     public static void registerCommand(SkyblockCore plugin) {
         MessageManager msg = plugin.getMessageManager();
 
-        new CommandAPICommand("test")
+        new CommandAPICommand("site-bagla")
                 .withArguments(new StringArgument("code"))
                 .executesPlayer((player, args) -> {
                     String rawCode = (String) args.get("code");
