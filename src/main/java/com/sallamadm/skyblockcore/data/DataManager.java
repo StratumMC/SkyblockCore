@@ -574,7 +574,26 @@ public class DataManager {
     }
 
     private void saveIslandSync(Island island) throws SQLException {
-        String sql = "REPLACE INTO sb_islands (owner_uuid, island_uuid, grid_index, island_size, island_level, island_name, is_locked, biome, center_world, center_x, center_y, center_z, spawn_x, spawn_y, spawn_z, spawn_yaw, spawn_pitch, banned_players) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO sb_islands (owner_uuid, island_uuid, grid_index, island_size, island_level, island_name, is_locked, biome, center_world, center_x, center_y, center_z, spawn_x, spawn_y, spawn_z, spawn_yaw, spawn_pitch, banned_players) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+                "ON DUPLICATE KEY UPDATE " +
+                "island_uuid = VALUES(island_uuid), " +
+                "grid_index = VALUES(grid_index), " +
+                "island_size = VALUES(island_size), " +
+                "island_level = VALUES(island_level), " +
+                "island_name = VALUES(island_name), " +
+                "is_locked = VALUES(is_locked), " +
+                "biome = VALUES(biome), " +
+                "center_world = VALUES(center_world), " +
+                "center_x = VALUES(center_x), " +
+                "center_y = VALUES(center_y), " +
+                "center_z = VALUES(center_z), " +
+                "spawn_x = VALUES(spawn_x), " +
+                "spawn_y = VALUES(spawn_y), " +
+                "spawn_z = VALUES(spawn_z), " +
+                "spawn_yaw = VALUES(spawn_yaw), " +
+                "spawn_pitch = VALUES(spawn_pitch), " +
+                "banned_players = VALUES(banned_players)";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, island.getOwnerUUID().toString());
             ps.setString(2, island.getIslandUuid());

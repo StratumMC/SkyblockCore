@@ -35,7 +35,7 @@ public class BlockLevelListener implements Listener {
         IslandBlockLevel blockLevel = IslandBlockLevel.fromMaterial(block.getType());
         if (blockLevel != null) {
             double levelGain = blockLevel.getLevel();
-            island.addLevel((int) (levelGain * 100));
+            island.addLevel(levelGain);
             if (plugin.getScoreboardManager() != null) {
                 plugin.getScoreboardManager().updateScoreboard(event.getPlayer());
             }
@@ -50,7 +50,7 @@ public class BlockLevelListener implements Listener {
         IslandBlockLevel blockLevel = IslandBlockLevel.fromMaterial(block.getType());
         if (blockLevel != null) {
             double levelLoss = blockLevel.getLevel();
-            island.addLevel(-((int) (levelLoss * 100)));
+            island.addLevel(-levelLoss);
             if (plugin.getScoreboardManager() != null) {
                 plugin.getScoreboardManager().updateScoreboard(event.getPlayer());
             }
