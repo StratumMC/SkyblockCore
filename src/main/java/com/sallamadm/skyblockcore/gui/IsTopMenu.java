@@ -34,9 +34,9 @@ public class IsTopMenu implements Listener {
 
     private static final int ISLANDS_PER_PAGE = 25;
 
-    private static final int SORT_LEVEL_SLOT = 46;
-    private static final int SORT_RATING_SLOT = 48;
-    private static final int SORT_LIKES_SLOT = 50;
+    private static final int SORT_LEVEL_SLOT = 37;
+    private static final int SORT_RATING_SLOT = 40;
+    private static final int SORT_LIKES_SLOT = 43;
 
     public static void openTopMenu(Player player) {
         openTopMenu(player, SORT_LEVEL, PERIOD_WEEKLY, 1);

@@ -49,6 +49,7 @@ public class GameruleMenu implements Listener {
         }
 
         GuiUtils.applyNavigationBar(inv, page, totalPages);
+        addWeatherButton(inv);
         CURRENT_PAGE.put(player.getUniqueId(), page);
         player.openInventory(inv);
     }
@@ -101,6 +102,10 @@ public class GameruleMenu implements Listener {
                 openGameruleMenu(player, island, currentPage - 1);
             } else if (slot == 53) {
                 openGameruleMenu(player, island, currentPage + 1);
+            } else if (slot == 44) {
+                player.closeInventory();
+                CURRENT_PAGE.remove(player.getUniqueId());
+                WeatherMenu.openWeatherMenu(player, island);
             }
             return;
         }
@@ -134,5 +139,19 @@ public class GameruleMenu implements Listener {
             if (cleanName.startsWith(rule.getDisplayName() + ":")) return rule;
         }
         return null;
+    }
+
+    private static void addWeatherButton(Inventory inv) {
+        ItemStack weatherBtn = new ItemStack(Material.SUNFLOWER);
+        ItemMeta meta = weatherBtn.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName(ChatColor.YELLOW + "Hava Durumu Ayarları");
+            meta.setLore(Arrays.asList(
+                    ChatColor.GRAY + "Ada hava durumu ayarlarını",
+                    ChatColor.GRAY + "düzenlemek için tıklayın."
+            ));
+            weatherBtn.setItemMeta(meta);
+        }
+        inv.setItem(44, weatherBtn);
     }
 }

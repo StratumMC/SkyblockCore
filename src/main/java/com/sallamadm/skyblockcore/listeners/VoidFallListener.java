@@ -1,6 +1,7 @@
 package com.sallamadm.skyblockcore.listeners;
 
 import com.sallamadm.skyblockcore.SkyblockCore;
+import com.sallamadm.skyblockcore.border.BorderManager;
 import com.sallamadm.skyblockcore.island.Island;
 import com.sallamadm.skyblockcore.island.IslandWeatherManager;
 import org.bukkit.Bukkit;
@@ -10,6 +11,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 
 public class VoidFallListener implements Listener {
 
@@ -48,6 +50,17 @@ public class VoidFallListener implements Listener {
                     event.setCancelled(true);
                 }
             }
+        }
+    }
+
+    @EventHandler
+    public void onPlayerRespawn(PlayerRespawnEvent event) {
+        Player player = event.getPlayer();
+        Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
+        if (island != null && island.getCenterLocation() != null) {
+            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+                BorderManager.applyIslandBorder(player, island);
+            }, 5L);
         }
     }
 
