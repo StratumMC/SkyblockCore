@@ -173,6 +173,8 @@ economy:
   self-payment: "&cKendine ödeme yapamazsın!"
   pay-success: "&a{target} &aadlı oyuncuya &e{amount} &aödendi!"
   pay-received: "&a{sender} &aadlı oyuncudan &e{amount} &aödeme aldın!"
+  pay-confirm: "&e{target} &aadlı oyuncuya &e{amount} &aödeme yapmak istediğine emin misin? Aynı komutu tekrar kullanarak onaylayabilirsin. (30 saniye geçerli)"
+  baltop-nouser: "&cBir hata yüzünden bal top gösterilemiyor!"
 #upgrades:
 # success: "&aSuccessfully upgraded!" secret update sssh!
 #not-enough-money: "&cYou don't have enough money for this upgrade!"
