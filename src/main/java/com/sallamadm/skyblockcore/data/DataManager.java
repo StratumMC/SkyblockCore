@@ -62,15 +62,15 @@ public class DataManager {
         return islandData.isLoading();
     }
 
+    public java.sql.Connection getDatabaseConnection() {
+        return databaseConnection.getConnection();
+    }
+
     public void closeConnection() {
         databaseConnection.closeConnection();
     }
 
     // ---- accounts / auth ----
-
-    public boolean consumeMinecraftLinkCode(UUID playerUuid, String username, String inputCode) {
-        return linkCodeData.consumeMinecraftLinkCode(playerUuid, username, inputCode);
-    }
 
     public boolean checkIfDiscordLinked(UUID playerUuid) {
         return linkCodeData.checkIfDiscordLinked(playerUuid);

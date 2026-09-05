@@ -23,7 +23,7 @@ public class ScoreboardManager {
 
         Island island = plugin.getIslandManager().getIsland(player.getUniqueId());
         double level = (island != null) ? island.getLevel() : 0D;
-        int likes = (island != null) ? plugin.getDataManager().getWeeklyLikeCount(island.getIslandUuid()) : 0;
+        int likes = (island != null) ? plugin.getDataManager().getTotalLikeCount(island.getIslandUuid()) : 0;
         double rating = (island != null) ? plugin.getDataManager().getIslandRating(island.getIslandUuid()) : 0D;
 
         String flyDisplay = player.isOp()
@@ -34,16 +34,16 @@ public class ScoreboardManager {
         Score likeLine = obj.getScore(ChatColor.WHITE + "Ada Like: " + ChatColor.LIGHT_PURPLE + likes);
         Score ratingLine = obj.getScore(ChatColor.WHITE + "Ada Rating: " + ChatColor.AQUA + String.format(Locale.US, "%.2f", rating));
         Score playerLine = obj.getScore(ChatColor.WHITE + "Oyuncu: " + ChatColor.YELLOW + player.getName());
-        Score levelLine = obj.getScore(ChatColor.WHITE + "Ada leveli: " + ChatColor.GREEN + String.format(Locale.US, "%.2f", level));
+        Score levelLine = obj.getScore(ChatColor.WHITE + "Ada leveli: " + ChatColor.GREEN + level);
         Score flyLine = obj.getScore(ChatColor.WHITE + "Fly süresi: " + ChatColor.AQUA + flyDisplay);
         Score blank2 = obj.getScore("  ");
         Score footer = obj.getScore(ChatColor.GRAY + "localhost");
 
-        blank1.setScore(8);
-        playerLine.setScore(7);
-        levelLine.setScore(6);
-        likeLine.setScore(5);
-        ratingLine.setScore(4);
+        blank1.setScore(9);
+        playerLine.setScore(8);
+        levelLine.setScore(7);
+        likeLine.setScore(6);
+        ratingLine.setScore(5);
         flyLine.setScore(3);
         blank2.setScore(2);
         footer.setScore(1);
