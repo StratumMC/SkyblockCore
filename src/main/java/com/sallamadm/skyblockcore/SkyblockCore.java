@@ -1,5 +1,6 @@
 package com.sallamadm.skyblockcore;
 
+import com.sallamadm.skyblockcore.api.EconomyProvider;
 import com.sallamadm.skyblockcore.commands.*;
 import com.sallamadm.skyblockcore.config.MessageManager;
 import com.sallamadm.skyblockcore.data.DataManager;
@@ -25,6 +26,11 @@ public final class SkyblockCore extends JavaPlugin {
     private MessageManager messageManager;
     private InviteManager inviteManager;
     private FlightManager flightManager;
+
+
+    //providers / yani diğer pluginler ile iletişim kurmak için kullanacağımız sınıflar
+    private static EconomyProvider economyProvider;
+
 
 
     @Override
@@ -136,4 +142,10 @@ public final class SkyblockCore extends JavaPlugin {
         return flightManager;
     }
 
+    public static void setEconomyProvider(EconomyProvider provider) {
+        economyProvider = provider;
+    }
+    public static EconomyProvider getEconomyProvider() {
+        return economyProvider;
+    }
 }

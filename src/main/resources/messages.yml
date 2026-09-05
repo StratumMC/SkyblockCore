@@ -166,6 +166,13 @@ invite:
 
 level:
   no-levels: "&eHenüz leveli olan ada yok."
+
+economy:
+  zero: "&c0 veya daha az bir miktar ödeyemezsin!"
+  not-enough-money: "&cBu ödemeyi yapmak için yeterli paran yok!"
+  self-payment: "&cKendine ödeme yapamazsın!"
+  pay-success: "&a{target} &aadlı oyuncuya &e{amount} &aödendi!"
+  pay-received: "&a{sender} &aadlı oyuncudan &e{amount} &aödeme aldın!"
 #upgrades:
 # success: "&aSuccessfully upgraded!" secret update sssh!
 #not-enough-money: "&cYou don't have enough money for this upgrade!"

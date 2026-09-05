@@ -25,6 +25,10 @@ public class ScoreboardManager {
         double level = (island != null) ? island.getLevel() : 0D;
         int likes = (island != null) ? plugin.getDataManager().getTotalLikeCount(island.getIslandUuid()) : 0;
         double rating = (island != null) ? plugin.getDataManager().getIslandRating(island.getIslandUuid()) : 0D;
+        double balance = 500D;
+        if(plugin.getEconomyProvider() != null){
+            balance = plugin.getEconomyProvider().getBalance(player.getUniqueId());
+        }
 
         String flyDisplay = player.isOp()
                 ? "0"
@@ -36,14 +40,16 @@ public class ScoreboardManager {
         Score playerLine = obj.getScore(ChatColor.WHITE + "Oyuncu: " + ChatColor.YELLOW + player.getName());
         Score levelLine = obj.getScore(ChatColor.WHITE + "Ada leveli: " + ChatColor.GREEN + level);
         Score flyLine = obj.getScore(ChatColor.WHITE + "Fly süresi: " + ChatColor.AQUA + flyDisplay);
+        Score balanceLine = obj.getScore(ChatColor.WHITE + "Bakiye: " + ChatColor.GOLD + String.format(Locale.US, "%,.2f", balance));
         Score blank2 = obj.getScore("  ");
         Score footer = obj.getScore(ChatColor.GRAY + "localhost");
 
         blank1.setScore(9);
         playerLine.setScore(8);
-        levelLine.setScore(7);
-        likeLine.setScore(6);
-        ratingLine.setScore(5);
+        balanceLine.setScore(7);
+        levelLine.setScore(6);
+        likeLine.setScore(5);
+        ratingLine.setScore(4);
         flyLine.setScore(3);
         blank2.setScore(2);
         footer.setScore(1);
