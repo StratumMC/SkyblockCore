@@ -1,6 +1,6 @@
 package com.sallamadm.skyblockcore.gui;
+
 import com.sallamadm.skyblockcore.SkyblockCore;
-import com.sallamadm.skyblockcore.config.MessageManager;
 import com.sallamadm.skyblockcore.gui.util.GuiUtils;
 import com.sallamadm.skyblockcore.island.Island;
 import org.bukkit.Bukkit;
@@ -16,6 +16,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import java.util.*;
+
 public class IsTopMenu implements Listener {
 
     private static final String MENU_TITLE = ChatColor.GOLD + "Ada Sıralaması";
@@ -23,6 +24,8 @@ public class IsTopMenu implements Listener {
     private static final Map<UUID, Integer> CURRENT_PAGE = new HashMap<>();
     private static final Map<UUID, String> CURRENT_SORT = new HashMap<>();
     private static final Map<UUID, String> CURRENT_LIKE_PERIOD = new HashMap<>();
+
+    private static final Map<UUID, Map<Integer, Island>> SLOT_ISLANDS = new HashMap<>();
 
     private static final String SORT_LEVEL = "level";
     private static final String SORT_RATING = "rating";
@@ -32,7 +35,7 @@ public class IsTopMenu implements Listener {
     private static final String PERIOD_MONTHLY = "ay";
     private static final String PERIOD_ALL_TIME = "hepsi";
 
-    private static final int ISLANDS_PER_PAGE = 25;
+    private static final int ISLANDS_PER_PAGE = 16;
 
     private static final int SORT_LEVEL_SLOT = 37;
     private static final int SORT_RATING_SLOT = 40;
@@ -41,6 +44,7 @@ public class IsTopMenu implements Listener {
     public static void openTopMenu(Player player) {
         openTopMenu(player, SORT_LEVEL, PERIOD_WEEKLY, 1);
     }
+
     public static void openTopMenu(Player player, String sortBy, String likePeriod, int page) {
         SkyblockCore plugin = SkyblockCore.getInstance();
 
@@ -60,57 +64,71 @@ public class IsTopMenu implements Listener {
         int endIdx = Math.min(startIdx + ISLANDS_PER_PAGE, rankedIslands.size());
         List<IslandRankData> pageIslands = rankedIslands.subList(startIdx, endIdx);
 
-        fillPyramidLayout(inv, pageIslands, sortBy, likePeriod);
+        UUID playerUUID = player.getUniqueId();
+        Map<Integer, Island> slotMap = new HashMap<>();
+
+        fillPyramidLayout(inv, pageIslands, sortBy, likePeriod, slotMap);
         fillSortButtons(inv, sortBy, likePeriod);
         GuiUtils.applyNavigationBar(inv, page, totalPages);
 
-        UUID playerUUID = player.getUniqueId();
         CURRENT_PAGE.put(playerUUID, page);
         CURRENT_SORT.put(playerUUID, sortBy);
         CURRENT_LIKE_PERIOD.put(playerUUID, likePeriod);
+        SLOT_ISLANDS.put(playerUUID, slotMap);
 
         player.openInventory(inv);
+
+        for (Map.Entry<Integer, Island> entry : slotMap.entrySet()) {
+            Island island = entry.getValue();
+            if (island != null && island.getOwnerUUID() != null) {
+                applyOwnerSkinAsync(plugin, inv, entry.getKey(), island.getOwnerUUID());
+            }
+        }
     }
-    private static void fillPyramidLayout(Inventory inv, List<IslandRankData> islands, String sortBy, String likePeriod) {
+
+    private static void fillPyramidLayout(Inventory inv, List<IslandRankData> islands, String sortBy, String likePeriod, Map<Integer, Island> slotMap) {
         int islandIndex = 0;
 
         if (islandIndex < islands.size()) {
-            inv.setItem(4, createIslandHead(islands.get(islandIndex++), sortBy, likePeriod));
+            int slot = 4;
+            IslandRankData data = islands.get(islandIndex++);
+            inv.setItem(slot, createIslandHead(data, sortBy, likePeriod));
+            slotMap.put(slot, data.island);
         }
 
-        for (int slot : new int[]{3, 4, 5}) {
+        for (int offset : new int[]{3, 4, 5}) {
             if (islandIndex < islands.size()) {
-                inv.setItem(9 + slot, createIslandHead(islands.get(islandIndex++), sortBy, likePeriod));
+                int slot = 9 + offset;
+                IslandRankData data = islands.get(islandIndex++);
+                inv.setItem(slot, createIslandHead(data, sortBy, likePeriod));
+                slotMap.put(slot, data.island);
             }
         }
 
-        for (int slot : new int[]{2, 3, 4, 5, 6}) {
+        for (int offset : new int[]{2, 3, 4, 5, 6}) {
             if (islandIndex < islands.size()) {
-                inv.setItem(18 + slot, createIslandHead(islands.get(islandIndex++), sortBy, likePeriod));
+                int slot = 18 + offset;
+                IslandRankData data = islands.get(islandIndex++);
+                inv.setItem(slot, createIslandHead(data, sortBy, likePeriod));
+                slotMap.put(slot, data.island);
             }
         }
 
-        for (int slot : new int[]{1, 2, 3, 4, 5, 6, 7}) {
+        for (int offset : new int[]{1, 2, 3, 4, 5, 6, 7}) {
             if (islandIndex < islands.size()) {
-                inv.setItem(27 + slot, createIslandHead(islands.get(islandIndex++), sortBy, likePeriod));
-            }
-        }
-
-        for (int slot : new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8}) {
-            if (islandIndex < islands.size()) {
-                inv.setItem(36 + slot, createIslandHead(islands.get(islandIndex++), sortBy, likePeriod));
+                int slot = 27 + offset;
+                IslandRankData data = islands.get(islandIndex++);
+                inv.setItem(slot, createIslandHead(data, sortBy, likePeriod));
+                slotMap.put(slot, data.island);
             }
         }
     }
+
     private static ItemStack createIslandHead(IslandRankData data, String sortBy, String likePeriod) {
         ItemStack head = new ItemStack(Material.PLAYER_HEAD);
         SkullMeta meta = (SkullMeta) head.getItemMeta();
 
-        if (meta != null && data.island != null && data.island.getOwnerUUID() != null) {
-            @SuppressWarnings("deprecation")
-            OfflinePlayer owner = Bukkit.getOfflinePlayer(data.island.getOwnerUUID());
-            meta.setOwningPlayer(owner);
-
+        if (meta != null && data.island != null) {
             meta.setDisplayName(ChatColor.GOLD + "#" + data.rank + ChatColor.RESET + " " + ChatColor.YELLOW + data.island.getIslandName());
 
             List<String> lore = new ArrayList<>();
@@ -121,7 +139,7 @@ public class IsTopMenu implements Listener {
             } else if (sortBy.equals(SORT_RATING)) {
                 lore.add(ChatColor.AQUA + "Rating: " + ChatColor.WHITE + String.format("%.2f", data.value));
             } else if (sortBy.equals(SORT_LIKES)) {
-                lore.add(ChatColor.AQUA + "Like:  (" + likePeriod + "): " + ChatColor.WHITE + (int) data.value);
+                lore.add(ChatColor.AQUA + "Like (" + likePeriod + "): " + ChatColor.WHITE + (int) data.value);
             }
 
             lore.add(" ");
@@ -133,6 +151,23 @@ public class IsTopMenu implements Listener {
 
         return head;
     }
+
+    private static void applyOwnerSkinAsync(SkyblockCore plugin, Inventory inv, int slot, UUID ownerUuid) {
+        Bukkit.createProfile(ownerUuid).update().thenAccept(profile ->
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    ItemStack current = inv.getItem(slot);
+                    if (current == null || current.getType() != Material.PLAYER_HEAD) return;
+
+                    ItemMeta rawMeta = current.getItemMeta();
+                    if (!(rawMeta instanceof SkullMeta meta)) return;
+
+                    meta.setOwnerProfile(profile);
+                    current.setItemMeta(meta);
+                    inv.setItem(slot, current);
+                })
+        );
+    }
+
     private static void fillSortButtons(Inventory inv, String sortBy, String likePeriod) {
         ItemStack levelBtn = new ItemStack(Material.DIAMOND_PICKAXE);
         ItemMeta levelMeta = levelBtn.getItemMeta();
@@ -169,6 +204,7 @@ public class IsTopMenu implements Listener {
         }
         inv.setItem(SORT_LIKES_SLOT, likesBtn);
     }
+
     private static List<IslandRankData> getRankedIslands(SkyblockCore plugin, String sortBy, String likePeriod) {
         List<IslandRankData> rankedIslands = new ArrayList<>();
         Map<UUID, Island> allIslands = plugin.getIslandManager().getAllIslands();
@@ -204,6 +240,7 @@ public class IsTopMenu implements Listener {
 
         return rankedIslands;
     }
+
     private static Island findIslandByUuid(Map<UUID, Island> allIslands, String uuid) {
         for (Island island : allIslands.values()) {
             if (island.getIslandUuid().equals(uuid)) {
@@ -212,6 +249,7 @@ public class IsTopMenu implements Listener {
         }
         return null;
     }
+
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         if (!event.getView().getTitle().equals(MENU_TITLE)) return;
@@ -224,17 +262,16 @@ public class IsTopMenu implements Listener {
         if (!(event.getWhoClicked() instanceof Player player)) return;
 
         int slot = event.getSlot();
-        String currentSort = CURRENT_SORT.getOrDefault(player.getUniqueId(), SORT_LEVEL);
-        String likePeriod = CURRENT_LIKE_PERIOD.getOrDefault(player.getUniqueId(), PERIOD_WEEKLY);
-        int currentPage = CURRENT_PAGE.getOrDefault(player.getUniqueId(), 1);
+        UUID playerUUID = player.getUniqueId();
+        String currentSort = CURRENT_SORT.getOrDefault(playerUUID, SORT_LEVEL);
+        String likePeriod = CURRENT_LIKE_PERIOD.getOrDefault(playerUUID, PERIOD_WEEKLY);
+        int currentPage = CURRENT_PAGE.getOrDefault(playerUUID, 1);
 
         if (GuiUtils.isNavigationSlot(slot)) {
             if (slot == 49) {
                 player.closeInventory();
                 IsMenu.openIsMenu(player);
-                CURRENT_PAGE.remove(player.getUniqueId());
-                CURRENT_SORT.remove(player.getUniqueId());
-                CURRENT_LIKE_PERIOD.remove(player.getUniqueId());
+                clearPlayerState(playerUUID);
                 return;
             }
 
@@ -253,6 +290,7 @@ public class IsTopMenu implements Listener {
                 }
                 return;
             }
+            return;
         }
 
         if (slot == SORT_LEVEL_SLOT) {
@@ -268,38 +306,33 @@ public class IsTopMenu implements Listener {
         if (slot == SORT_LIKES_SLOT) {
             String nextPeriod = likePeriod.equals(PERIOD_WEEKLY) ? PERIOD_MONTHLY
                     : likePeriod.equals(PERIOD_MONTHLY) ? PERIOD_ALL_TIME
-                      : PERIOD_WEEKLY;
+                    : PERIOD_WEEKLY;
             openTopMenu(player, SORT_LIKES, nextPeriod, 1);
             return;
         }
 
-        if (slot >= 0 && slot <= 44) {
-            ItemStack clicked = event.getCurrentItem();
-            if (clicked != null && clicked.getType() == Material.PLAYER_HEAD && clicked.getItemMeta() != null) {
-                String displayName = ChatColor.stripColor(clicked.getItemMeta().getDisplayName());
-                String islandName = displayName.replaceAll("#\\d+\\s+", "").trim();
+        Map<Integer, Island> slotMap = SLOT_ISLANDS.get(playerUUID);
+        if (slotMap == null) return;
 
-                Island targetIsland = null;
-                for (Island island : SkyblockCore.getInstance().getIslandManager().getAllIslands().values()) {
-                    if (island.getIslandName().equalsIgnoreCase(islandName)) {
-                        targetIsland = island;
-                        break;
-                    }
-                }
+        Island targetIsland = slotMap.get(slot);
+        if (targetIsland == null || targetIsland.getOwnerUUID() == null) return;
 
-                if (targetIsland != null && targetIsland.getOwnerUUID() != null) {
-                    OfflinePlayer owner = Bukkit.getOfflinePlayer(targetIsland.getOwnerUUID());
-                    if (owner != null && owner.getName() != null) {
-                        player.closeInventory();
-                        WarpMenu.openVisitorWarpMenu(player, owner.getName());
-                        CURRENT_PAGE.remove(player.getUniqueId());
-                        CURRENT_SORT.remove(player.getUniqueId());
-                        CURRENT_LIKE_PERIOD.remove(player.getUniqueId());
-                    }
-                }
-            }
-        }
+        OfflinePlayer owner = Bukkit.getOfflinePlayer(targetIsland.getOwnerUUID());
+        String ownerName = owner.getName();
+        if (ownerName == null) return;
+
+        player.closeInventory();
+        WarpMenu.openVisitorWarpMenu(player, ownerName);
+        clearPlayerState(playerUUID);
     }
+
+    private static void clearPlayerState(UUID playerUUID) {
+        CURRENT_PAGE.remove(playerUUID);
+        CURRENT_SORT.remove(playerUUID);
+        CURRENT_LIKE_PERIOD.remove(playerUUID);
+        SLOT_ISLANDS.remove(playerUUID);
+    }
+
     private static class IslandRankData {
         int rank;
         Island island;
