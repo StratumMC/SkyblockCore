@@ -81,7 +81,9 @@ public class DatabaseConnection {
                     "spawn_z DOUBLE, " +
                     "spawn_yaw FLOAT, " +
                     "spawn_pitch FLOAT, " +
-                    "banned_players TEXT)");
+                    "banned_players TEXT, " +
+                    "island_balance DOUBLE)");
+
 
             statement.execute("CREATE TABLE IF NOT EXISTS sb_warps (" +
                     "owner_uuid VARCHAR(36), " +
