@@ -131,7 +131,15 @@ public class IslandData {
 
     private void saveIslandSync(Island island) throws SQLException {
         Connection connection = connection();
-        String sql = "REPLACE INTO sb_islands (owner_uuid, island_uuid, grid_index, island_size, island_level, island_name, is_locked, biome, center_world, center_x, center_y, center_z, spawn_x, spawn_y, spawn_z, spawn_yaw, spawn_pitch, banned_players) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO sb_islands (owner_uuid, island_uuid, grid_index, island_size, island_level, island_name, is_locked, biome, center_world, center_x, center_y, center_z, spawn_x, spawn_y, spawn_z, spawn_yaw, spawn_pitch, banned_players, island_balance) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+                "ON DUPLICATE KEY UPDATE " +
+                "island_uuid = VALUES(island_uuid), grid_index = VALUES(grid_index), island_size = VALUES(island_size), " +
+                "island_level = VALUES(island_level), island_name = VALUES(island_name), is_locked = VALUES(is_locked), " +
+                "biome = VALUES(biome), center_world = VALUES(center_world), center_x = VALUES(center_x), " +
+                "center_y = VALUES(center_y), center_z = VALUES(center_z), spawn_x = VALUES(spawn_x), " +
+                "spawn_y = VALUES(spawn_y), spawn_z = VALUES(spawn_z), spawn_yaw = VALUES(spawn_yaw), " +
+                "spawn_pitch = VALUES(spawn_pitch), banned_players = VALUES(banned_players), island_balance = VALUES(island_balance)";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, island.getOwnerUUID().toString());
             ps.setString(2, island.getIslandUuid());
@@ -162,6 +170,7 @@ public class IslandData {
             }
 
             ps.setString(18, island.getBannedPlayersAsString());
+            ps.setDouble(19, island.getBalance());
             ps.executeUpdate();
         }
 
@@ -171,7 +180,9 @@ public class IslandData {
         }
 
         if (!island.getWarps().isEmpty()) {
-            String warpSql = "INSERT INTO sb_warps (owner_uuid, name, icon, is_visible, x, y, z, yaw, pitch) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            // ON DUPLICATE KEY UPDATE eklendi, böylece aynı warp adı batch içine denk gelse bile hata fırlatmaz, günceller.
+            String warpSql = "INSERT INTO sb_warps (owner_uuid, name, icon, is_visible, x, y, z, yaw, pitch) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+                    "ON DUPLICATE KEY UPDATE icon = VALUES(icon), is_visible = VALUES(is_visible), x = VALUES(x), y = VALUES(y), z = VALUES(z), yaw = VALUES(yaw), pitch = VALUES(pitch)";
             try (PreparedStatement ps = connection.prepareStatement(warpSql)) {
                 for (Warp warp : island.getWarps().values()) {
                     ps.setString(1, island.getOwnerUUID().toString());
@@ -192,6 +203,21 @@ public class IslandData {
                 ps.executeBatch();
             }
         }
+    }
+
+    public void updateIslandBalanceAsync(String islandUuid, double newBalance) {
+        Connection connection = connection();
+        if (islandUuid == null || connection == null) return;
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try (PreparedStatement ps = connection.prepareStatement(
+                    "UPDATE sb_islands SET island_balance = ? WHERE island_uuid = ?")) {
+                ps.setDouble(1, newBalance);
+                ps.setString(2, islandUuid);
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     public void loadData() {
@@ -226,6 +252,7 @@ public class IslandData {
                     island.setIslandName(rs.getString("island_name"));
                     island.setLocked(rs.getBoolean("is_locked"));
                     island.loadBannedPlayersFromString(rs.getString("banned_players"));
+                    island.setBalance(rs.getDouble("island_balance"));
 
                     String dbIslandUuid = rs.getString("island_uuid");
                     if (dbIslandUuid != null && !dbIslandUuid.isEmpty()) {

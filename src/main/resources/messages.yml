@@ -167,6 +167,20 @@ invite:
 level:
   no-levels: "&eHenüz leveli olan ada yok."
 
+bank:
+  no-permission: "&cAda bankasını kullanmaya yetkin yok!"
+  deposit-prompt: "&eSohbete yatırmak istediğiniz miktarı yazın. İptal etmek için &c'iptal' &eyazın. (30 saniye)"
+  withdraw-prompt: "&eSohbete çekmek istediğiniz miktarı yazın. İptal etmek için &c'iptal' &eyazın. (30 saniye)"
+  cancelled: "&eİşlem iptal edildi."
+  timeout: "&cİşlem zaman aşımına uğradı, tekrar deneyin."
+  invalid-amount: "&cGeçerli bir sayı girmelisin! (örnek: 1000)"
+  amount-must-be-positive: "&c0'dan büyük bir miktar girmelisin!"
+  not-enough-player-balance: "&cCüzdanında bu kadar paran yok!"
+  not-enough-island-balance: "&cAda bankasında bu kadar para yok!"
+  economy-unavailable: "&cEkonomi sistemi şu anda kullanılamıyor!"
+  deposit-success: "&a{amount} &aada bankasına yatırıldı! Yeni bakiye: &e{balance}"
+  withdraw-success: "&a{amount} &acüzdanına çekildi! Yeni bakiye: &e{balance}"
+
 economy:
   zero: "&c0 veya daha az bir miktar ödeyemezsin!"
   not-enough-money: "&cBu ödemeyi yapmak için yeterli paran yok!"

@@ -18,7 +18,14 @@ public class DatabaseConnection {
         createTables();
     }
 
-    public Connection getConnection() {
+    public synchronized Connection getConnection() {
+        try {
+            if (connection == null || connection.isClosed() || !connection.isValid(2)) {
+                connect();
+            }
+        } catch (SQLException e) {
+            connect();
+        }
         return connection;
     }
 
@@ -31,15 +38,19 @@ public class DatabaseConnection {
 
         try {
             if (connection != null && !connection.isClosed()) {
-                return;
+                try {
+                    connection.close();
+                } catch (SQLException ignored) {}
             }
             Class.forName("com.mysql.cj.jdbc.Driver");
-            connection = DriverManager.getConnection(
-                    "jdbc:mysql://" + host + ":" + port + "/" + database + "?autoReconnect=true&useSSL=true", username, password
-            );
-            plugin.getLogger().severe("MySQL baglandi.");
+
+            String url = "jdbc:mysql://" + host + ":" + port + "/" + database +
+                    "?autoReconnect=true&useSSL=false&interactiveClient=true&tcpKeepAlive=true";
+
+            connection = DriverManager.getConnection(url, username, password);
+            plugin.getLogger().info("MySQL baglantisi yenilendi/kuruldu.");
         } catch (Exception e) {
-            plugin.getLogger().severe("MySQL baglanamadi " + e.getMessage());
+            plugin.getLogger().severe("MySQL baglanamadi: " + e.getMessage());
         }
     }
 
@@ -54,8 +65,9 @@ public class DatabaseConnection {
     }
 
     private void createTables() {
-        if (connection == null) return;
-        try (Statement statement = connection.createStatement()) {
+        Connection conn = getConnection();
+        if (conn == null) return;
+        try (Statement statement = conn.createStatement()) {
             statement.execute("CREATE TABLE IF NOT EXISTS sb_system (" +
                     "id INT PRIMARY KEY, " +
                     "next_grid_index INT NOT NULL)");
@@ -83,7 +95,6 @@ public class DatabaseConnection {
                     "spawn_pitch FLOAT, " +
                     "banned_players TEXT, " +
                     "island_balance DOUBLE)");
-
 
             statement.execute("CREATE TABLE IF NOT EXISTS sb_warps (" +
                     "owner_uuid VARCHAR(36), " +
@@ -152,6 +163,14 @@ public class DatabaseConnection {
                     "credit INT DEFAULT 0, " +
                     "fly_seconds BIGINT NOT NULL DEFAULT 0)");
 
+            statement.execute("CREATE TABLE IF NOT EXISTS sb_island_like_votes (" +
+                    "island_uuid VARCHAR(36) NOT NULL, " +
+                    "voter_uuid VARCHAR(36) NOT NULL, " +
+                    "week_key VARCHAR(10) NOT NULL, " +
+                    "month_key VARCHAR(7) NOT NULL, " +
+                    "liked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                    "PRIMARY KEY (island_uuid, voter_uuid, week_key, month_key), " +
+                    "FOREIGN KEY (island_uuid) REFERENCES sb_islands(island_uuid) ON DELETE CASCADE)");
 
             statement.execute("ALTER TABLE sb_islands MODIFY island_level DOUBLE NOT NULL");
         } catch (SQLException e) {

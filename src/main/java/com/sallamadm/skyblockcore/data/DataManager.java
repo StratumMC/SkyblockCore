@@ -142,6 +142,10 @@ public class DataManager {
         return islandData.getTopLeveledIslands();
     }
 
+    public void updateIslandBalanceAsync(String islandUuid, double newBalance) {
+        islandData.updateIslandBalanceAsync(islandUuid, newBalance);
+    }
+
     // ---- island permissions / gamerules / weather / members ----
 
     public void setPermissionAsync(String islandUuid, int roleTier, String node, boolean granted) {

@@ -21,7 +21,8 @@ public enum IslandPermissions {
     MANAGE_ROLES("island.manageroles", "Rol Yönetimi", Material.MINECART),
     MANAGE_GAMERULES("island.managegamerules", "Gamerule Yönetimi", Material.COMMAND_BLOCK),
     MANAGE_WEATHER("island.manageweather", "Hava Durumu Yönetimi", Material.SUNFLOWER),
-    FLY("island.fly", "Uçuş İzni", Material.FEATHER);
+    FLY("island.fly", "Uçuş İzni", Material.FEATHER),
+    BANK("island.bank", "Ada Bankası Kullanımı", Material.GOLD_INGOT);
 
     private final String node;
     private final String displayName;

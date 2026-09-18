@@ -22,6 +22,7 @@ public class Island {
     private String islandName;
     private Biome biome;
     private boolean locked = false;
+    private double islandBalance = 0D;
 
     private final Map<String, Warp> warps = new HashMap<>();
     private final Set<UUID> bannedPlayers = new HashSet<>();
@@ -135,6 +136,33 @@ public class Island {
     public void setLocked(boolean locked) {
         this.locked = locked;
         autoSave();
+    }
+
+    // ada bankası
+
+    public double getBalance() {
+        return islandBalance;
+    }
+
+    public void setBalance(double balance) {
+        this.islandBalance = Math.max(0D, balance);
+        if (islandUuid != null && SkyblockCore.getInstance() != null
+                && SkyblockCore.getInstance().getDataManager() != null
+                && !SkyblockCore.getInstance().getDataManager().isLoading()) {
+            SkyblockCore.getInstance().getDataManager().updateIslandBalanceAsync(islandUuid, this.islandBalance);
+        }
+    }
+
+    public void addBalance(double amount) {
+        if (amount <= 0) return;
+        setBalance(this.islandBalance + amount);
+    }
+
+    public boolean removeBalance(double amount) {
+        if (amount <= 0) return false;
+        if (this.islandBalance < amount) return false;
+        setBalance(this.islandBalance - amount);
+        return true;
     }
 
     public Map<String, Warp> getWarps() {

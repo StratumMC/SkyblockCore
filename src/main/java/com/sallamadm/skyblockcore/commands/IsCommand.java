@@ -435,7 +435,7 @@ public class IsCommand {
 
                                     int likes = period.equals("hafta") ? plugin.getDataManager().getWeeklyLikeCount(island.getIslandUuid())
                                             : period.equals("ay") ? plugin.getDataManager().getMonthlyLikeCount(island.getIslandUuid())
-                                              : plugin.getDataManager().getTotalLikeCount(island.getIslandUuid());
+                                            : plugin.getDataManager().getTotalLikeCount(island.getIslandUuid());
                                     player.sendMessage(msg.getMessage("likes.stats")
                                             .replace("{period}", period)
                                             .replace("{likes}", String.valueOf(likes)));
@@ -780,6 +780,25 @@ public class IsCommand {
                                         return;
                                     }
                                     WeatherMenu.openWeatherMenu(player, island);
+                                })
+                ))
+
+                // /is bank
+                .withSubcommand(createSubCommand("bank", "Ada bankasını açın.",
+                        new CommandAPICommand("bank")
+                                .executesPlayer((player, args) -> {
+                                    Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
+                                    if (island == null) {
+                                        player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+
+                                    if (!island.hasPermission(player.getUniqueId(), IslandPermissions.BANK.getNode())) {
+                                        player.sendMessage(msg.getMessage("bank.no-permission"));
+                                        return;
+                                    }
+
+                                    IsBankMenu.openBankMenu(player, island);
                                 })
                 ))
 

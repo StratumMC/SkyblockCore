@@ -37,7 +37,7 @@ public class IslandLikeData {
         String monthKey = YearMonth.from(today).toString();
 
         try {
-            String weeklySql = "SELECT 1 FROM sb_island_likes WHERE island_uuid = ? AND voter_uuid = ? AND week_key = ?";
+            String weeklySql = "SELECT 1 FROM sb_island_like_votes WHERE island_uuid = ? AND voter_uuid = ? AND week_key = ?";
             try (PreparedStatement ps = connection.prepareStatement(weeklySql)) {
                 ps.setString(1, islandUuid);
                 ps.setString(2, voterUuid.toString());
@@ -47,7 +47,7 @@ public class IslandLikeData {
                 }
             }
 
-            String monthlySql = "SELECT COUNT(*) FROM sb_island_likes WHERE island_uuid = ? AND voter_uuid = ? AND month_key = ?";
+            String monthlySql = "SELECT COUNT(*) FROM sb_island_like_votes WHERE island_uuid = ? AND voter_uuid = ? AND month_key = ?";
             try (PreparedStatement ps = connection.prepareStatement(monthlySql)) {
                 ps.setString(1, islandUuid);
                 ps.setString(2, voterUuid.toString());
@@ -57,7 +57,7 @@ public class IslandLikeData {
                 }
             }
 
-            String insertSql = "INSERT INTO sb_island_likes (island_uuid, voter_uuid, week_key, month_key) VALUES (?, ?, ?, ?)";
+            String insertSql = "INSERT INTO sb_island_like_votes (island_uuid, voter_uuid, week_key, month_key) VALUES (?, ?, ?, ?)";
             try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
                 ps.setString(1, islandUuid);
                 ps.setString(2, voterUuid.toString());
@@ -93,9 +93,9 @@ public class IslandLikeData {
 
         String sql;
         if (periodColumn != null) {
-            sql = "SELECT COUNT(DISTINCT voter_uuid) FROM sb_island_likes WHERE island_uuid = ? AND " + periodColumn + " = ?";
+            sql = "SELECT COUNT(DISTINCT voter_uuid) FROM sb_island_like_votes WHERE island_uuid = ? AND " + periodColumn + " = ?";
         } else {
-            sql = "SELECT COUNT(DISTINCT voter_uuid) FROM sb_island_likes WHERE island_uuid = ?";
+            sql = "SELECT COUNT(DISTINCT voter_uuid) FROM sb_island_like_votes WHERE island_uuid = ?";
         }
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, islandUuid);
@@ -128,9 +128,9 @@ public class IslandLikeData {
         Map<String, Integer> likes = new LinkedHashMap<>();
         String sql;
         if (periodColumn != null) {
-            sql = "SELECT island_uuid, COUNT(DISTINCT voter_uuid) AS likes FROM sb_island_likes WHERE " + periodColumn + " = ? GROUP BY island_uuid ORDER BY likes DESC LIMIT 10";
+            sql = "SELECT island_uuid, COUNT(DISTINCT voter_uuid) AS likes FROM sb_island_like_votes WHERE " + periodColumn + " = ? GROUP BY island_uuid ORDER BY likes DESC LIMIT 10";
         } else {
-            sql = "SELECT island_uuid, COUNT(DISTINCT voter_uuid) AS likes FROM sb_island_likes GROUP BY island_uuid ORDER BY likes DESC LIMIT 10";
+            sql = "SELECT island_uuid, COUNT(DISTINCT voter_uuid) AS likes FROM sb_island_like_votes GROUP BY island_uuid ORDER BY likes DESC LIMIT 10";
         }
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             if (periodColumn != null) ps.setString(1, periodKey);
