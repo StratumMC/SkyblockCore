@@ -71,6 +71,7 @@ public final class SkyblockCore extends JavaPlugin {
         FlyItemCommand.registerCommand(this);
         WebConnectCommand.registerCommand(this);
         DiscordConnectCommand.registerCommand(this);
+        BlockInfoCommand.registerCommand(this);
 
 
         getServer().getPluginManager().registerEvents(new JoinListener(this), this);
@@ -93,6 +94,7 @@ public final class SkyblockCore extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new WeatherMenu(), this);
         getServer().getPluginManager().registerEvents(new IsTopMenu(), this);
         getServer().getPluginManager().registerEvents(new IsBankMenu(), this);
+        getServer().getPluginManager().registerEvents(new BlockLevelMenu(), this);
 
         IslandWeatherManager.startThunderEffectTask(this);
 
