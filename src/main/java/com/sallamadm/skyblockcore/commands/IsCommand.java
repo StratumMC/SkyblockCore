@@ -442,6 +442,94 @@ public class IsCommand {
                                 })
                 ))
 
+                // /is coop <target>
+                .withSubcommand(createSubCommand("coop <target>", "Oyuncuya sadece blok kırma/koyma yetkisi verin.",
+                        new CommandAPICommand("coop")
+                                .withArguments(new PlayerArgument("target"))
+                                .executesPlayer((player, args) -> {
+                                    Player target = (Player) args.get("target");
+
+                                    if (target.getUniqueId().equals(player.getUniqueId())) {
+                                        player.sendMessage(msg.getMessage("coop.cannot-coop-self"));
+                                        return;
+                                    }
+
+                                    Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
+                                    if (island == null) {
+                                        player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+
+                                    if (!island.hasPermission(player.getUniqueId(), IslandPermissions.MANAGE_COOP.getNode())) {
+                                        player.sendMessage(msg.getMessage("general.no-permission"));
+                                        return;
+                                    }
+
+                                    if (target.getUniqueId().equals(island.getOwnerUUID())) {
+                                        player.sendMessage(msg.getMessage("coop.cannot-coop-owner"));
+                                        return;
+                                    }
+
+                                    int existingTier = island.getRoleTier(target.getUniqueId());
+
+                                    if (existingTier == IslandRole.COOP.getTier()) {
+                                        player.sendMessage(msg.getMessage("coop.already-coop"));
+                                        return;
+                                    }
+
+                                    if (existingTier != IslandRole.VISITOR.getTier()) {
+                                        player.sendMessage(msg.getMessage("coop.already-a-member"));
+                                        return;
+                                    }
+
+                                    island.addOrUpdateMember(target.getUniqueId(), IslandRole.COOP, player.getUniqueId());
+
+                                    player.sendMessage(msg.getMessage("coop.added").replace("{target}", target.getName()));
+                                    target.sendMessage(msg.getMessage("coop.added-notify")
+                                            .replace("{inviter}", player.getName())
+                                            .replace("{island}", island.getIslandName()));
+                                })
+                ))
+
+                // /is uncoop <target>
+                .withSubcommand(createSubCommand("uncoop <target>", "Oyuncunun co-op yetkisini kaldırın.",
+                        new CommandAPICommand("uncoop")
+                                .withArguments(new StringArgument("target"))
+                                .executesPlayer((player, args) -> {
+                                    String targetName = (String) args.get("target");
+
+                                    Island island = plugin.getIslandManager().getIslandByMember(player.getUniqueId());
+                                    if (island == null) {
+                                        player.sendMessage(msg.getMessage("island.no-island"));
+                                        return;
+                                    }
+
+                                    if (!island.hasPermission(player.getUniqueId(), IslandPermissions.MANAGE_COOP.getNode())) {
+                                        player.sendMessage(msg.getMessage("general.no-permission"));
+                                        return;
+                                    }
+
+                                    @SuppressWarnings("deprecation")
+                                    OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
+                                    UUID targetUuid = target.getUniqueId();
+
+                                    if (island.getRoleTier(targetUuid) != IslandRole.COOP.getTier()) {
+                                        player.sendMessage(msg.getMessage("coop.not-coop"));
+                                        return;
+                                    }
+
+                                    island.removeMember(targetUuid);
+
+                                    String resolvedName = target.getName() != null ? target.getName() : targetName;
+                                    player.sendMessage(msg.getMessage("coop.removed").replace("{target}", resolvedName));
+
+                                    Player targetOnline = target.getPlayer();
+                                    if (targetOnline != null && targetOnline.isOnline()) {
+                                        targetOnline.sendMessage(msg.getMessage("coop.removed-notify"));
+                                    }
+                                })
+                ))
+
                 // /is liketop <hafta/ay/hepsi>
                 .withSubcommand(createSubCommand("liketop <hafta/ay/hepsi>", "En çok beğeni alan adaları görün.",
                         new CommandAPICommand("liketop")

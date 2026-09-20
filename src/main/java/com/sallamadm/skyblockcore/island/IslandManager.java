@@ -2,14 +2,12 @@ package com.sallamadm.skyblockcore.island;
 
 import com.sallamadm.skyblockcore.SkyblockCore;
 import com.sallamadm.skyblockcore.gui.BiomeMenu;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.block.Biome;
+import org.bukkit.entity.Player;
 
 import java.util.*;
-
-import static org.bukkit.block.Biome.PLAINS;
 
 public class IslandManager {
 
@@ -134,6 +132,24 @@ public class IslandManager {
             }
         }
         return null;
+    }
+
+    public void removeCoopsAddedBy(UUID inviterUuid){
+        for (Island island : islands.values()) {
+            List<UUID> toRemove = new ArrayList<>();
+            for (Map.Entry<UUID, UUID> entry : island.getCoopAddedBy().entrySet()) {
+                if (entry.getValue().equals(inviterUuid)) {
+                    toRemove.add(entry.getKey());
+                }
+            }
+            for (UUID coopUuid : toRemove) {
+                island.removeMember(coopUuid);
+                Player coopPlayer = Bukkit.getPlayer(coopUuid);
+                if (coopPlayer != null && coopPlayer.isOnline()) {
+                    coopPlayer.sendMessage(SkyblockCore.getInstance().getMessageManager().getMessage("coop.expired-notify"));
+                }
+            }
+        }
     }
 
     public int getNextGridIndex() {

@@ -18,6 +18,7 @@ public enum IslandPermissions {
     SET_NAME("island.setname", "İsim Değiştirme", Material.NAME_TAG),
     LOCK_ISLAND("island.lock", "Ada Kilitleme", Material.TRIPWIRE_HOOK),
     INVITE("island.invite", "Davet Etme", Material.PAPER),
+    MANAGE_COOP("island.managecoop", "Co-op Yönetimi", Material.LEAD),
     MANAGE_ROLES("island.manageroles", "Rol Yönetimi", Material.MINECART),
     MANAGE_GAMERULES("island.managegamerules", "Gamerule Yönetimi", Material.COMMAND_BLOCK),
     MANAGE_WEATHER("island.manageweather", "Hava Durumu Yönetimi", Material.SUNFLOWER),

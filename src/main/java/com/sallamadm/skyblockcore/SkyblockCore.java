@@ -81,6 +81,7 @@ public final class SkyblockCore extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new AuthListener(this), this);
         getServer().getPluginManager().registerEvents(new FlyItemListener(this), this);
         getServer().getPluginManager().registerEvents(new BlockLevelListener(this), this);
+        getServer().getPluginManager().registerEvents(new CoopExpiryListener(this), this);
         getServer().getPluginManager().registerEvents(flightManager, this);
 
         //guis

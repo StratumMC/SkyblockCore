@@ -181,6 +181,18 @@ bank:
   deposit-success: "&a{amount} &aada bankasına yatırıldı! Yeni bakiye: &e{balance}"
   withdraw-success: "&a{amount} &acüzdanına çekildi! Yeni bakiye: &e{balance}"
 
+coop:
+  cannot-coop-self: "&cKendini co-op olarak ekleyemezsin!"
+  cannot-coop-owner: "&cAda sahibini co-op olarak ekleyemezsin!"
+  already-a-member: "&cBu oyuncu zaten adanızın bir üyesi! Rolünü /is members üzerinden yönetebilirsiniz."
+  already-coop: "&cBu oyuncu zaten co-op olarak eklenmiş!"
+  added: "&e{target} &aadlı oyuncu co-op olarak eklendi! Sadece blok kırma/koyma yapabilir, siz çıkış yapana veya /is uncoop yapana kadar geçerlidir."
+  added-notify: "&e{inviter} &aseni &e{island} &aadasına co-op olarak ekledi! Sadece blok kırma/koyma yapabilirsin."
+  not-coop: "&cBu oyuncu co-op değil!"
+  removed: "&e{target} &aadlı oyuncunun co-op yetkisi kaldırıldı."
+  removed-notify: "&cCo-op yetkiniz kaldırıldı."
+  expired-notify: "&cSeni ekleyen oyuncu çıkış yaptığı için co-op yetkiniz sona erdi."
+
 economy:
   zero: "&c0 veya daha az bir miktar ödeyemezsin!"
   not-enough-money: "&cBu ödemeyi yapmak için yeterli paran yok!"

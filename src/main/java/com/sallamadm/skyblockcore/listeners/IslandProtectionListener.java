@@ -86,6 +86,15 @@ public class IslandProtectionListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onBlockBreak(BlockBreakEvent event) {
+        Block block = event.getBlock();
+
+        boolean isContainer = block.getState() instanceof InventoryHolder;
+        if (isContainer && !hasIslandPermission(event.getPlayer(), block.getLocation(), IslandPermissions.CONTAINER_ACCESS)) {
+            event.setCancelled(true);
+            event.getPlayer().sendMessage(msg.getMessage("protection.cannot-container"));
+            return;
+        }
+
         if (!hasIslandPermission(event.getPlayer(), event.getBlock().getLocation(), IslandPermissions.BLOCK_BREAK)) {
             event.setCancelled(true);
             event.getPlayer().sendMessage(msg.getMessage("protection.cannot-build"));
